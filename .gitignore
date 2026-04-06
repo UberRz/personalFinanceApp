@@ -1,0 +1,155 @@
+# Git Ignore - AppFinanzas
+# Archivos y carpetas que NO deben subirse a GitHub
+
+# ============================================
+# FRONTEND (Node.js / React)
+# ============================================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+frontend/.cache/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# npm
+frontend/package-lock.json
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Optional npm cache directory
+frontend/.npm
+frontend/.eslintcache
+
+# ============================================
+# BACKEND (Java / Maven)
+# ============================================
+backend/target/
+backend/.classpath
+backend/.factorypath
+backend/.project
+backend/.settings/
+backend/*.jks
+backend/.env
+backend/.env.local
+
+# Maven
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/log/
+backend/*.log
+
+# IDE
+backend/.idea/
+backend/*.iml
+backend/.vscode/
+
+# ============================================
+# BASE DE DATOS / VOLÚMENES
+# ============================================
+volumes/db/data/
+volumes/backend/logs/
+volumes/db/backups/
+*.sql
+*.backup
+
+# ============================================
+# DOCKER
+# ============================================
+.dockerignore
+docker-compose.override.yml
+
+# ============================================
+# SISTEMA OPERATIVO
+# ============================================
+# Windows
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*.swo
+*~
+
+# Linux
+.directory
+*~
+
+# ============================================
+# EDITORES DE CÓDIGO
+# ============================================
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+.idea/
+*.swp
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# ARCHIVOS TEMPORALES Y DE COMPILACIÓN
+# ============================================
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# ============================================
+# VARIABLES DE ENTORNO
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.test
+.env.production
+
+# ============================================
+# COVERAGE Y PRUEBAS
+# ============================================
+coverage/
+.nyc_output/
+junit/
+*.lcov
+
+# ============================================
+# NODE Y NPM ESPECÍFICO
+# ============================================
+node_modules/
+.pnpm-store/
+.yarn/install-state.gz
+.yarn/cache/
+.yarn/build-state.yml
+
+# ============================================
+# CERTIFICADOS Y CREDENTIALS (¡IMPORTANTE!)
+# ============================================
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+credentials.json
+secrets.json
+
+# ============================================
+# ARCHIVOS DE SISTEMA CUSTOMIZADOS
+# ============================================
+.DS_Store
+Thumbs.db
+.env.*.local
+*.tmp
+*.bak
+*.swp

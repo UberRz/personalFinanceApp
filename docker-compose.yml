@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: appfinanzas_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: appfinanzas_db
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./volumes/db/backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d appfinanzas_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - appfinanzas-network
+
+  backend:
+    build: ./backend
+    container_name: appfinanzas_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/appfinanzas_db
+      SPRING_DATASOURCE_USERNAME: appuser
+      SPRING_DATASOURCE_PASSWORD: apppassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: false
+      SERVER_PORT: 8080
+    volumes:
+      - ./volumes/backend/logs:/app/logs
+    networks:
+      - appfinanzas-network
+
+  frontend:
+    build: ./frontend
+    container_name: appfinanzas_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://backend:8080
+      NODE_ENV: production
+    networks:
+      - appfinanzas-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  appfinanzas-network:
+    driver: bridge
