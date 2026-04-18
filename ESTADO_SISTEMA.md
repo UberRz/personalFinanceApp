@@ -1,99 +1,133 @@
 # 🚀 Estado del Sistema AppFinanzas
 
-## 📋 Verificación Final - 2026-04-06 19:12 UTC-5
+## ✅ Estado Actual - 2026-04-18 01:45 UTC
 
-**Sistema Completamente Operativo y Corregido** ✅
+**Sistema Completamente Operativo - Autenticación Implementada** ✅
 
-**Cambios Realizados:**
+### Últimas Actualizaciones:
 
-- ✅ Errores JSON en API Backend -> Resueltos
-- ✅ Errores al registrar gastos -> Resueltos
-- ✅ Errores al eliminar gastos -> Resueltos
-- ✅ Respuestas de API devolviendo JSON válido
-- ✅ Cliente actualizado para manejar nuevas respuestas
-- ✅ Docker reconstruido sin cache
-- ✅ Todos los servicios corriendo correctamente
+- ✅ **Sistema de Autenticación Completo**: Registro e inicio de sesión funcionales
+- ✅ **Protección de Rutas**: Solo usuarios autenticados pueden acceder a gastos
+- ✅ **Logout Funcional**: Disponible en Home y ExpensesPage
+- ✅ **Validaciones Robustas**: Frontend y backend
+- ✅ **Base de Datos Persistente**: PostgreSQL con tabla de usuarios
 
 ---
 
 ## ✅ Servicios Activos
 
-| Servicio       | Estado       | Puerto | URL                                                            |
-| -------------- | ------------ | ------ | -------------------------------------------------------------- |
-| **Frontend**   | ✅ Corriendo | 3000   | http://localhost:3000                                          |
-| **Backend**    | ✅ Corriendo | 8080   | http://localhost:8080                                          |
-| **PostgreSQL** | ✅ Healthy   | 5432   | postgresql://appuser:apppassword@localhost:5432/appfinanzas_db |
+| Servicio       | Estado       | Puerto | URL                                                         |
+| -------------- | ------------ | ------ | ----------------------------------------------------------- |
+| **Frontend**   | ✅ Corriendo | 3000   | http://localhost:3000                                       |
+| **Backend**    | ✅ Corriendo | 8080   | http://localhost:8080                                       |
+| **PostgreSQL** | ✅ Healthy   | 5432   | postgresql://appuser:password@localhost:5432/appfinanzas_db |
 
 ---
 
-## 📊 Verificación de Conectividad
+## 🔐 Sistema de Autenticación
 
-### Backend
+### Endpoints Implementados
 
-- ✅ Spring Boot inició correctamente
-- ✅ Tomcat escuchando en puerto 8080
-- ✅ JPA EntityManager inicializado
-- ✅ Pool de conexiones a la BD activo
+| Método | Endpoint         | Descripción             | Requiere Auth |
+| ------ | ---------------- | ----------------------- | ------------- |
+| POST   | `/auth/register` | Registrar nuevo usuario | ❌            |
+| POST   | `/auth/login`    | Iniciar sesión          | ❌            |
+| GET    | `/expenses`      | Obtener gastos          | ✅            |
+| POST   | `/expenses`      | Crear gasto             | ✅            |
+| DELETE | `/expenses/{id}` | Eliminar gasto          | ✅            |
 
-### Base de Datos
-
-- ✅ PostgreSQL corriendo y healthy
-- ✅ Base de datos `appfinanzas_db` creada
-- ✅ Tabla `expenses` disponible (0 registros inicialmente)
-- ✅ Conexión de HikariCP activa
-
-### Frontend
-
-- ✅ React + Serve corriendo
-- ✅ Aceptando conexiones en puerto 3000
-- ✅ Listo para comunicarse con el backend
-
----
-
-## 🔌 Conectividad entre Servicios
-
-```
-Frontend (localhost:3000)
-    ↓ (HTTP requests)
-Backend (localhost:8080)
-    ↓ (JDBC)
-PostgreSQL (localhost:5432)
-```
-
-### URLs de Acceso
-
-**Desde el navegador:**
-
-- Landing Page: `http://localhost:3000`
-- Gestión de Gastos: `http://localhost:3000` → Click "Comenzar a Registrar Gastos"
-
-**API Backend:**
-
-- Base URL: `http://localhost:8080`
-- Health Check: `http://localhost:8080/actuator/health`
-- POST Gasto: `POST http://localhost:8080/expenses`
-- GET Gastos: `GET http://localhost:8080/expenses`
-- DELETE Gasto: `DELETE http://localhost:8080/expenses/{id}`
-
----
-
-## 🔄 Flujo de la Aplicación
+### Flujo de Autenticación
 
 ```
 1. Usuario accede a http://localhost:3000
    ↓
-2. Ve la página Home (Landing Page)
+2. App verifica if isAuthenticated()
+   ↓ NO
+3. Muestra Login Page
+   ↓ Usuario registra o login
    ↓
-3. Click en "Comenzar a Registrar Gastos"
+4. Backend valida credenciales
    ↓
-4. Frontend llama a: POST http://localhost:8080/expenses
+5. Devuelve datos del usuario
    ↓
-5. Backend valida y guarda en PostgreSQL
-   ↓
-6. Frontend obtiene historial con: GET http://localhost:8080/expenses
-   ↓
-7. Se muestra lista de gastos actualizada
+6. Frontend guarda en localStorage
+   ↓ SÍ
+7. Muestra Home Page
 ```
+
+### Requisitos de Contraseña
+
+✅ 8-10 caracteres  
+✅ Mayúsculas (A-Z)  
+✅ Minúsculas (a-z)  
+✅ Números (0-9)  
+✅ Símbolos (!@#$%^&\* etc.)
+
+**Ejemplo válido:** `Test1234!`
+
+---
+
+## 📊 Verificación de Servicios
+
+### Backend
+
+- ✅ Spring Boot 3.5.13 iniciado
+- ✅ Tomcat escuchando puerto 8080
+- ✅ JPA con Hibernate activo
+- ✅ HikariCP pool de conexiones activo
+- ✅ 27 clases Java compiladas
+
+### Base de Datos
+
+- ✅ PostgreSQL 15 corriendo
+- ✅ Base de datos `appfinanzas_db` disponible
+- ✅ Tablas: `expenses`, `users`
+- ✅ Datos persistentes
+
+### Frontend
+
+- ✅ React 18.3 + TypeScript 5.5 corriendo
+- ✅ Vite dev server escuchando puerto 3000
+- ✅ Componentes compilados y funcionales
+- ✅ Conexión con backend establecida
+
+---
+
+## 🔌 Conectividad
+
+```
+Frontend (localhost:3000)
+    ↓ HTTP requests
+Backend (localhost:8080)
+    ↓ JDBC
+PostgreSQL (localhost:5432)
+```
+
+### Verificación Manual
+
+```bash
+# Registrar usuario
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"Test1234!","name":"Test User"}'
+
+# Login
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"Test1234!"}'
+
+# Ver gastos (sin token fallará)
+curl http://localhost:8080/expenses
+```
+
+---
+
+## 👤 Usuarios de Prueba
+
+| Email              | Contraseña  | Nombre    |
+| ------------------ | ----------- | --------- |
+| `test@test.com`    | `Test1234!` | Test User |
+| `john@example.com` | `John1234!` | John Doe  |
 
 ---
 

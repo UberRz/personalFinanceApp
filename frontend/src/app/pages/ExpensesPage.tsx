@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet } from 'lucide-react';
+import { Wallet, LogOut } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
@@ -7,6 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/ta
 import { BudgetSummary } from '@/app/components/BudgetSummary';
 import { ExpenseForm } from '@/app/components/ExpenseForm';
 import { ExpenseList } from '@/app/components/ExpenseList';
+import { Input } from '@/app/components/ui/input';
+import { Label } from '@/app/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
 import {
   registerExpense,
   getAllExpenses,
@@ -14,7 +23,9 @@ import {
   getBudgetLimit,
   Expense,
   ExpenseDTO,
+  TransactionType,
 } from '@/app/services/expenseService';
+import { logout } from '@/app/services/authService';
 
 interface ExpensesPageProps {
   onNavigate: (page: string) => void;
@@ -23,11 +34,15 @@ interface ExpensesPageProps {
 export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: ExpensesPageProps) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [totalSpent, setTotalSpent] = useState(0);
+  const [totalIncome, setTotalIncome] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const budgetLimit = getBudgetLimit();
 
-  // Load expenses on mount
   useEffect(() => {
     loadExpenses();
   }, []);
@@ -35,14 +50,27 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const loadExpenses = async () => {
     try {
       setIsLoadingExpenses(true);
+      setError(null);
+      console.log('Loading expenses...');
       const data = await getAllExpenses();
-      setExpenses(data);
-      const total = data.reduce((sum: number, expense: Expense) => sum + expense.amount, 0);
-      setTotalSpent(total);
+      console.log('Expenses loaded:', data);
+      setExpenses(data || []);
+      
+      const spent = (data || [])
+        .filter((t: Expense) => t.type === TransactionType.GASTO)
+        .reduce((sum: number, t: Expense) => sum + t.amount, 0);
+      const income = (data || [])
+        .filter((t: Expense) => t.type === TransactionType.INGRESO)
+        .reduce((sum: number, t: Expense) => sum + t.amount, 0);
+      
+      setTotalSpent(spent);
+      setTotalIncome(income);
     } catch (error) {
       console.error('Error loading expenses:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+      setError(errorMsg);
       toast.error('Error', {
-        description: 'No se pudo cargar los gastos. Verifica la conexión con el backend.',
+        description: 'No se pudo cargar las transacciones.',
       });
     } finally {
       setIsLoadingExpenses(false);
@@ -53,12 +81,10 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     try {
       setIsLoading(true);
       const result = await registerExpense(dto);
-
       if (result.success) {
         toast.success('Éxito', {
           description: result.message,
         });
-        // Reload expenses
         await loadExpenses();
       } else {
         toast.error('Error', {
@@ -89,31 +115,69 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
       }
     } catch (error) {
       toast.error('Error', {
-        description: 'Error inesperado al eliminar el gasto',
+        description: 'Error inesperado al eliminar',
       });
     }
   };
+
+  const getFilteredExpenses = () => {
+    let filtered = [...expenses];
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((e) => {
+        const d = new Date(e.date);
+        return d >= start && d <= end;
+      });
+    } else if (startDate) {
+      const start = new Date(startDate);
+      filtered = filtered.filter((e) => new Date(e.date) >= start);
+    } else if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((e) => new Date(e.date) <= end);
+    }
+
+    if (transactionTypeFilter) {
+      filtered = filtered.filter((e) => e.type === transactionTypeFilter);
+    }
+
+    return filtered;
+  };
+
+  const filteredExpenses = getFilteredExpenses();
+  const isFilterActive = !!(startDate || endDate || transactionTypeFilter);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <Toaster position="top-right" richColors />
 
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Navigation Bar */}
         <nav className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Wallet className="w-8 h-8 text-indigo-600" />
             <h1 className="text-2xl font-bold text-indigo-900">AppFinanzas</h1>
           </div>
-          <Button 
-            onClick={() => onNavigate('home')}
-            variant="outline"
-          >
-            Volver al Home
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button onClick={() => onNavigate('home')} variant="outline">
+              Volver al Home
+            </Button>
+            <Button
+              onClick={() => {
+                logout();
+                onNavigate('login');
+              }}
+              variant="outline"
+              className="border-red-500 text-red-500 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Cerrar Sesión
+            </Button>
+          </div>
         </nav>
 
-        {/* Header */}
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-3">
             <Wallet className="w-10 h-10 text-primary" />
@@ -122,27 +186,23 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
             </h2>
           </div>
           <p className="text-slate-600">
-            Controla tus gastos y mantén tu presupuesto bajo control
+            Controla tus ingresos y gastos
           </p>
         </div>
 
-        {/* Budget Summary */}
-        {!isLoadingExpenses && <BudgetSummary totalSpent={totalSpent} />}
+        {!isLoadingExpenses && <BudgetSummary totalSpent={totalSpent} totalIncome={totalIncome} />}
 
-        {/* Main Content */}
         <Tabs defaultValue="register" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="register">Registrar Gasto</TabsTrigger>
-            <TabsTrigger value="history">Historial de Gastos</TabsTrigger>
+            <TabsTrigger value="register">Registrar Gasto/Ingreso</TabsTrigger>
+            <TabsTrigger value="history">Historial</TabsTrigger>
           </TabsList>
 
           <TabsContent value="register" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Nuevo Gasto</CardTitle>
-                <CardDescription>
-                  Registra un nuevo gasto en tu presupuesto mensual
-                </CardDescription>
+                <CardTitle>Nuevo Gasto/Ingreso</CardTitle>
+                <CardDescription>Registra un nuevo movimiento</CardDescription>
               </CardHeader>
               <CardContent>
                 <ExpenseForm onSubmit={handleSubmitExpense} isLoading={isLoading} />
@@ -153,52 +213,99 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
           <TabsContent value="history" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Historial de Gastos</CardTitle>
+                <CardTitle>Historial de Transacciones</CardTitle>
                 <CardDescription>
                   {isLoadingExpenses
                     ? 'Cargando...'
-                    : expenses.length === 0
-                    ? 'No hay gastos registrados'
-                    : `${expenses.length} gasto${expenses.length !== 1 ? 's' : ''} registrado${
-                        expenses.length !== 1 ? 's' : ''
-                      }`}
+                    : `${filteredExpenses.length} transacciones`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <div className="bg-red-50 border border-red-200 rounded p-4 mb-4">
+                    <p className="text-red-700 font-semibold">Error:</p>
+                    <p className="text-red-600 text-sm">{error}</p>
+                  </div>
+                )}
+                
                 {isLoadingExpenses ? (
                   <div className="text-center py-8">
-                    <p className="text-slate-500">Cargando gastos...</p>
+                    <p className="text-slate-500">Cargando transacciones...</p>
                   </div>
                 ) : (
-                  <ExpenseList expenses={expenses} onDelete={handleDeleteExpense} />
+                  <div className="space-y-6">
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                      <h3 className="font-semibold mb-4">Filtros</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="space-y-2">
+                          <Label>Desde</Label>
+                          <Input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Hasta</Label>
+                          <Input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Tipo</Label>
+                          <Select value={transactionTypeFilter || 'ALL'} onValueChange={(val) => setTransactionTypeFilter(val === 'ALL' ? '' : val)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Todos" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ALL">Todos</SelectItem>
+                              <SelectItem value="GASTO">Gastos</SelectItem>
+                              <SelectItem value="INGRESO">Ingresos</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {isFilterActive && (
+                        <Button
+                          onClick={() => {
+                            setStartDate('');
+                            setEndDate('');
+                            setTransactionTypeFilter('');
+                          }}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Limpiar Filtros
+                        </Button>
+                      )}
+                    </div>
+
+                    {expenses.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-slate-500">No hay transacciones registradas</p>
+                      </div>
+                    ) : (
+                      <>
+                        {filteredExpenses.length === 0 ? (
+                          <div className="text-center py-8">
+                            <p className="text-slate-500">No hay transacciones que coincidan con los filtros</p>
+                          </div>
+                        ) : (
+                          <ExpenseList
+                            expenses={filteredExpenses}
+                            onDelete={handleDeleteExpense}
+                          />
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Info Footer */}
-        <Card className="bg-slate-900 text-white border-slate-800">
-          <CardContent className="pt-6">
-            <div className="text-sm space-y-2">
-              <p className="font-medium">💡 Integración con Backend</p>
-              <p className="text-slate-300">
-                Esta aplicación está integrada con el backend de Spring Boot. Los datos se almacenan en PostgreSQL
-                y todas las operaciones se replican en la base de datos del servidor.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-4 text-xs text-slate-400">
-                <div>
-                  <span className="font-medium text-slate-200">API Endpoints:</span>
-                  <p>POST /expenses, GET /expenses, DELETE /expenses/:id</p>
-                </div>
-                <div>
-                  <span className="font-medium text-slate-200">Presupuesto límite:</span>
-                  <p>${budgetLimit.toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
