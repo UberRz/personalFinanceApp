@@ -9,7 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from './ui/select';
-import { Category, categoryLabels, type ExpenseDTO } from '../services/expenseService';
+import {
+  Category,
+  IncomeCategory,
+  TransactionType,
+  getAvailableCategories,
+  getCategoryLabel,
+  type ExpenseDTO,
+} from '../services/expenseService';
 import { Calendar } from 'lucide-react';
 
 interface ExpenseFormProps {
@@ -20,8 +27,11 @@ interface ExpenseFormProps {
 export function ExpenseForm({ onSubmit, isLoading }: ExpenseFormProps) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
+  const [type, setType] = useState<TransactionType>(TransactionType.GASTO);
   const [category, setCategory] = useState<string>('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+  const availableCategories = getAvailableCategories(type);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,12 +40,14 @@ export function ExpenseForm({ onSubmit, isLoading }: ExpenseFormProps) {
       description,
       amount: parseFloat(amount),
       category,
-      date
+      date,
+      type
     });
 
     // Limpiar formulario
     setDescription('');
     setAmount('');
+    setType(TransactionType.GASTO);
     setCategory('');
     setDate(new Date().toISOString().split('T')[0]);
   };
@@ -55,6 +67,27 @@ export function ExpenseForm({ onSubmit, isLoading }: ExpenseFormProps) {
           disabled={isLoading}
           required
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="type">Tipo</Label>
+        <Select
+          value={type}
+          onValueChange={(value) => {
+            const nextType = value as TransactionType;
+            setType(nextType);
+            setCategory('');
+          }}
+          disabled={isLoading}
+        >
+          <SelectTrigger id="type">
+            <SelectValue placeholder="Selecciona el tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TransactionType.GASTO}>Gasto</SelectItem>
+            <SelectItem value={TransactionType.INGRESO}>Ingreso</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -97,9 +130,9 @@ export function ExpenseForm({ onSubmit, isLoading }: ExpenseFormProps) {
             <SelectValue placeholder="Selecciona una categoría" />
           </SelectTrigger>
           <SelectContent>
-            {Object.entries(categoryLabels).map(([key, label]) => (
-              <SelectItem key={key} value={key}>
-                {label}
+            {availableCategories.map((value) => (
+              <SelectItem key={value} value={value}>
+                {getCategoryLabel(value)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -107,7 +140,7 @@ export function ExpenseForm({ onSubmit, isLoading }: ExpenseFormProps) {
       </div>
 
       <Button type="submit" className="w-full" disabled={!isValid || isLoading}>
-        {isLoading ? 'Registrando...' : 'Registrar Gasto'}
+        {isLoading ? 'Registrando...' : type === TransactionType.INGRESO ? 'Registrar Ingreso' : 'Registrar Gasto'}
       </Button>
     </form>
   );

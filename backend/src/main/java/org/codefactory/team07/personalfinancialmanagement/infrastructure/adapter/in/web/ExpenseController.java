@@ -7,6 +7,9 @@ import org.codefactory.team07.personalfinancialmanagement.application.usecase.Ge
 import org.codefactory.team07.personalfinancialmanagement.application.usecase.RegisterExpenseUseCase;
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Category;
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Expense;
+import org.codefactory.team07.personalfinancialmanagement.domain.model.Income;
+import org.codefactory.team07.personalfinancialmanagement.domain.model.IncomeCategory;
+import org.codefactory.team07.personalfinancialmanagement.domain.model.TransactionType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,14 +37,22 @@ public class ExpenseController {
                         new ApiResponse("Error en los datos: la categoría es obligatoria", false));
             }
 
-            Expense expense = new Expense(
+            TransactionType type = resolveType(dto.getType());
+            Expense transaction = type == TransactionType.INGRESO
+                ? new Income(
+                    dto.getDescription(),
+                    dto.getAmount(),
+                    IncomeCategory.valueOf(dto.getCategory().toUpperCase()),
+                    dto.getDate())
+                : new Expense(
                     dto.getDescription(),
                     dto.getAmount(),
                     Category.valueOf(dto.getCategory().toUpperCase()),
                     dto.getDate());
-            String result = registerUseCase.execute(expense);
+
+            String result = registerUseCase.execute(transaction);
             return ResponseEntity.status(201).body(
-                    new ApiResponse(result, true, expense));
+                new ApiResponse(result, true, transaction));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(
                     new ApiResponse("Error en los datos: " + e.getMessage(), false));
@@ -58,10 +69,17 @@ public class ExpenseController {
         try {
             deleteUseCase.execute(id);
             return ResponseEntity.ok(
-                    new ApiResponse("Gasto eliminado correctamente", true));
+                    new ApiResponse("Registro eliminado correctamente", true));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(
-                    new ApiResponse("Error al eliminar el gasto: " + e.getMessage(), false));
+                    new ApiResponse("Error al eliminar el registro: " + e.getMessage(), false));
         }
+    }
+
+    private TransactionType resolveType(String type) {
+        if (type == null || type.isBlank()) {
+            return TransactionType.GASTO;
+        }
+        return TransactionType.valueOf(type.toUpperCase());
     }
 }

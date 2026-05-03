@@ -9,7 +9,12 @@ import {
   TableRow,
 } from './ui/table';
 import { Badge } from './ui/badge';
-import { type Expense, categoryLabels, Category } from '../services/expenseService';
+import {
+  type Expense,
+  TransactionType,
+  getCategoryLabel,
+  getTransactionTypeLabel,
+} from '../services/expenseService';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -18,21 +23,17 @@ interface ExpenseListProps {
   onDelete: (id: number) => void;
 }
 
-const categoryColors: Record<Category, string> = {
-  [Category.ALIMENTACION]: 'bg-green-100 text-green-800 hover:bg-green-100',
-  [Category.TRANSPORTE]: 'bg-blue-100 text-blue-800 hover:bg-blue-100',
-  [Category.VIVIENDA]: 'bg-purple-100 text-purple-800 hover:bg-purple-100',
-  [Category.ENTRETENIMIENTO]: 'bg-pink-100 text-pink-800 hover:bg-pink-100',
-  [Category.SALUD]: 'bg-red-100 text-red-800 hover:bg-red-100',
-  [Category.EDUCACION]: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-100',
+const transactionColors: Record<TransactionType, string> = {
+  [TransactionType.GASTO]: 'bg-red-100 text-red-800 hover:bg-red-100',
+  [TransactionType.INGRESO]: 'bg-emerald-100 text-emerald-800 hover:bg-emerald-100',
 };
 
 export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
   if (expenses.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <p>No hay gastos registrados aún.</p>
-        <p className="text-sm mt-2">Comienza registrando tu primer gasto.</p>
+        <p>No hay transacciones registradas aún.</p>
+        <p className="text-sm mt-2">Comienza registrando tu primer movimiento.</p>
       </div>
     );
   }
@@ -49,6 +50,7 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
           <TableRow>
             <TableHead>Fecha</TableHead>
             <TableHead>Descripción</TableHead>
+            <TableHead>Tipo</TableHead>
             <TableHead>Categoría</TableHead>
             <TableHead className="text-right">Monto</TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -64,13 +66,21 @@ export function ExpenseList({ expenses, onDelete }: ExpenseListProps) {
               <TableCell>
                 <Badge 
                   variant="secondary" 
-                  className={categoryColors[expense.category]}
+                  className={transactionColors[expense.type]}
                 >
-                  {categoryLabels[expense.category]}
+                  {getTransactionTypeLabel(expense.type)}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge 
+                  variant="secondary" 
+                  className={expense.type === TransactionType.INGRESO ? 'bg-sky-100 text-sky-800 hover:bg-sky-100' : 'bg-indigo-100 text-indigo-800 hover:bg-indigo-100'}
+                >
+                  {getCategoryLabel(expense.category)}
                 </Badge>
               </TableCell>
               <TableCell className="text-right font-medium">
-                ${expense.amount.toFixed(2)}
+                {expense.type === TransactionType.INGRESO ? '+' : '-'}${expense.amount.toFixed(2)}
               </TableCell>
               <TableCell>
                 <Button

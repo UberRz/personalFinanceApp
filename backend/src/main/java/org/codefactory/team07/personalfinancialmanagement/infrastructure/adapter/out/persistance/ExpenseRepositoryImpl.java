@@ -3,8 +3,8 @@ package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapte
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.codefactory.team07.personalfinancialmanagement.domain.model.Category;
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Expense;
+import org.codefactory.team07.personalfinancialmanagement.domain.model.TransactionType;
 import org.codefactory.team07.personalfinancialmanagement.domain.port.out.ExpenseRepository;
 import org.springframework.stereotype.Component;
 
@@ -21,15 +21,16 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
                 null,
                 expense.getDescription(),
                 expense.getAmount(),
-                expense.getCategory().name(),
-                expense.getDate());
+            expense.getCategory(),
+            expense.getDate(),
+            expense.getType().name());
         jpaRepository.save(entity);
     }
 
     @Override
     public double getTotalSpent() {
-        // Sumamos todos los montos de la tabla
         return jpaRepository.findAll().stream()
+            .filter(entity -> TransactionType.GASTO.name().equalsIgnoreCase(entity.getType()))
                 .mapToDouble(ExpenseEntity::getAmount)
                 .sum();
     }
@@ -41,8 +42,11 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
                         entity.getId(),
                         entity.getDescription(),
                         entity.getAmount(),
-                        Category.valueOf(entity.getCategory()),
-                        entity.getDate()))
+                entity.getCategory(),
+                entity.getDate(),
+                entity.getType() == null || entity.getType().isBlank()
+                    ? TransactionType.GASTO
+                    : TransactionType.valueOf(entity.getType().toUpperCase())))
                 .collect(Collectors.toList());
     }
 

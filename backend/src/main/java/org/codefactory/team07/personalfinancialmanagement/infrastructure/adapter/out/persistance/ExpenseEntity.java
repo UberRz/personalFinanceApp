@@ -17,4 +17,5 @@ public class ExpenseEntity {
     private double amount;
     private String category;
     private LocalDate date;
+    private String type;
 }

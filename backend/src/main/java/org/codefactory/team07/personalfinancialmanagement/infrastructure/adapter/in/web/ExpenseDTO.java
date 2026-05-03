@@ -10,4 +10,5 @@ public class ExpenseDTO {
     private double amount;
     private String category; // Viene como String y lo convertimos a Enum
     private LocalDate date;
+    private String type;
 }

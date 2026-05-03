@@ -3,6 +3,11 @@
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
 const API_TIMEOUT = 10000;
 
+export enum TransactionType {
+  GASTO = 'GASTO',
+  INGRESO = 'INGRESO'
+}
+
 export enum Category {
   ALIMENTACION = 'ALIMENTACION',
   TRANSPORTE = 'TRANSPORTE',
@@ -12,12 +17,18 @@ export enum Category {
   EDUCACION = 'EDUCACION'
 }
 
+export enum IncomeCategory {
+  INGRESO_FIJO = 'INGRESO_FIJO',
+  INGRESO_EXTRA = 'INGRESO_EXTRA'
+}
+
 export interface Expense {
   id: number;
   description: string;
   amount: number;
-  category: Category;
+  category: string;
   date: string; // ISO date string
+  type: TransactionType;
 }
 
 export interface ExpenseDTO {
@@ -25,6 +36,7 @@ export interface ExpenseDTO {
   amount: number;
   category: string;
   date: string;
+  type?: TransactionType;
 }
 
 export interface ApiResponse {
@@ -34,14 +46,54 @@ export interface ApiResponse {
 
 const BUDGET_LIMIT = 1000.0;
 
+const transactionTypeLabels: Record<TransactionType, string> = {
+  [TransactionType.GASTO]: 'Gasto',
+  [TransactionType.INGRESO]: 'Ingreso'
+};
+
+export const categoryLabels: Record<string, string> = {
+  [Category.ALIMENTACION]: 'Alimentación',
+  [Category.TRANSPORTE]: 'Transporte',
+  [Category.VIVIENDA]: 'Vivienda',
+  [Category.ENTRETENIMIENTO]: 'Entretenimiento',
+  [Category.SALUD]: 'Salud',
+  [Category.EDUCACION]: 'Educación',
+  [IncomeCategory.INGRESO_FIJO]: 'Ingreso fijo',
+  [IncomeCategory.INGRESO_EXTRA]: 'Ingreso extra'
+};
+
+export function getCategoryLabel(category: string): string {
+  return categoryLabels[category] ?? category;
+}
+
+export function getAvailableCategories(type: TransactionType): string[] {
+  return type === TransactionType.INGRESO
+    ? Object.values(IncomeCategory)
+    : Object.values(Category);
+}
+
+export function getTransactionTypeLabel(type: TransactionType): string {
+  return transactionTypeLabels[type];
+}
+
 // Validaciones del dominio (igual que en el backend)
 function validateExpense(dto: ExpenseDTO): void {
   if (dto.amount <= 0) {
     throw new Error("El monto debe ser mayor a 0");
   }
-  
-  if (!dto.category || !Object.values(Category).includes(dto.category as Category)) {
+
+  const type = dto.type ?? TransactionType.GASTO;
+
+  if (!dto.category) {
     throw new Error("La categoría no es válida");
+  }
+
+  if (type === TransactionType.INGRESO) {
+    if (!Object.values(IncomeCategory).includes(dto.category as IncomeCategory)) {
+      throw new Error("La categoría no es válida para un ingreso");
+    }
+  } else if (!Object.values(Category).includes(dto.category as Category)) {
+    throw new Error("La categoría no es válida para un gasto");
   }
   
   if (!dto.date) {
@@ -93,6 +145,7 @@ async function apiCall<T>(
 export async function registerExpense(dto: ExpenseDTO): Promise<ApiResponse> {
   try {
     validateExpense(dto);
+    const type = dto.type ?? TransactionType.GASTO;
 
     const response = await apiCall<ApiResponse>(
       '/expenses',
@@ -101,12 +154,15 @@ export async function registerExpense(dto: ExpenseDTO): Promise<ApiResponse> {
         description: dto.description,
         amount: dto.amount,
         category: dto.category.toUpperCase(),
-        date: dto.date
+        date: dto.date,
+        type
       }
     );
 
     return response || {
-      message: 'Gasto registrado exitosamente.',
+      message: type === TransactionType.INGRESO
+        ? 'Ingreso registrado exitosamente.'
+        : 'Gasto registrado exitosamente.',
       success: true
     };
   } catch (error) {
@@ -131,9 +187,23 @@ export async function getAllExpenses(): Promise<Expense[]> {
 export async function getTotalSpent(): Promise<number> {
   try {
     const expenses = await getAllExpenses();
-    return expenses.reduce((total, expense) => total + expense.amount, 0);
+    return expenses
+      .filter((expense) => expense.type === TransactionType.GASTO)
+      .reduce((total, expense) => total + expense.amount, 0);
   } catch (error) {
     console.error('Error calculating total spent:', error);
+    throw error;
+  }
+}
+
+export async function getTotalIncome(): Promise<number> {
+  try {
+    const expenses = await getAllExpenses();
+    return expenses
+      .filter((expense) => expense.type === TransactionType.INGRESO)
+      .reduce((total, expense) => total + expense.amount, 0);
+  } catch (error) {
+    console.error('Error calculating total income:', error);
     throw error;
   }
 }
@@ -157,12 +227,3 @@ export async function deleteExpense(id: number): Promise<ApiResponse> {
 export function getBudgetLimit(): number {
   return BUDGET_LIMIT;
 }
-
-export const categoryLabels: Record<Category, string> = {
-  [Category.ALIMENTACION]: 'Alimentación',
-  [Category.TRANSPORTE]: 'Transporte',
-  [Category.VIVIENDA]: 'Vivienda',
-  [Category.ENTRETENIMIENTO]: 'Entretenimiento',
-  [Category.SALUD]: 'Salud',
-  [Category.EDUCACION]: 'Educación'
-};
