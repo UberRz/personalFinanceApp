@@ -1,5 +1,6 @@
 package org.codefactory.team07.personalfinancialmanagement.domain.port.out;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +12,9 @@ public interface ExpenseRepository {
 
     double getTotalSpent();
 
-    List<Expense> findAll(Optional<TransactionType> transactionType);
+    List<Expense> findAll(Optional<TransactionType> transactionType,
+                          Optional<LocalDate> startDate,
+                          Optional<LocalDate> endDate);
 
     List<Expense> findAll();
 

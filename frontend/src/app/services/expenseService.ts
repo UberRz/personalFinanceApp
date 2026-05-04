@@ -174,13 +174,15 @@ export async function registerExpense(dto: ExpenseDTO): Promise<ApiResponse> {
   }
 }
 
-export async function getAllExpenses(transactionType?: TransactionType): Promise<Expense[]> {
+export async function getAllExpenses(transactionType?: TransactionType, startDate?: string, endDate?: string): Promise<Expense[]> {
   try {
     let endpoint = '/expenses';
     // Construye URL con query string si se proporciona filtro
-    if (transactionType) {
-      endpoint += `?type=${transactionType}`;
-    }
+    const params: string[] = [];
+    if (transactionType) params.push(`type=${encodeURIComponent(transactionType)}`);
+    if (startDate) params.push(`startDate=${encodeURIComponent(startDate)}`);
+    if (endDate) params.push(`endDate=${encodeURIComponent(endDate)}`);
+    if (params.length) endpoint += `?${params.join('&')}`;
     const expenses = await apiCall<Expense[]>(endpoint, 'GET');
     return expenses || [];
   } catch (error) {

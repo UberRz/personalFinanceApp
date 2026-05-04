@@ -38,17 +38,15 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
   const [transactionTypeFilter, setTransactionTypeFilter] = useState<TransactionType | undefined>(undefined);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const budgetLimit = getBudgetLimit();
 
-  // Carga todas las transacciones al montar
+  // Carga todas las transacciones al montar y cuando cambian filtros
   useEffect(() => {
     loadExpenses();
-  }, []);
-
-  useEffect(() => {
-    loadExpenses();
-  }, [transactionTypeFilter]);
+  }, [transactionTypeFilter, startDate, endDate]);
 
   const loadExpenses = async () => {
     try {
@@ -56,8 +54,8 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
       setError(null);
       console.log('Loading expenses with filter:', transactionTypeFilter);
       
-      // Llamada al backend con filtro opcional
-      const data = await getAllExpenses(transactionTypeFilter);
+      // Llamada al backend con filtros opcionales
+      const data = await getAllExpenses(transactionTypeFilter, startDate || undefined, endDate || undefined);
       console.log('Expenses loaded:', data);
       setExpenses(data || []);
       
@@ -215,7 +213,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                     {/* EC-01: Filtro por tipo de transacción (backend) */}
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                       <h3 className="font-semibold mb-4">Filtros</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="space-y-2">
                           <Label>Tipo de Transacción</Label>
                           <Select 
@@ -232,12 +230,24 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                             </SelectContent>
                           </Select>
                         </div>
+
+                        <div className="space-y-2">
+                          <Label>Fecha Inicio</Label>
+                          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Fecha Fin</Label>
+                          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                        </div>
                       </div>
                       {/* EC-02: Botón para limpiar filtro */}
-                      {isFilterActive && (
+                      {(isFilterActive || startDate || endDate) && (
                         <Button
                           onClick={() => {
                             setTransactionTypeFilter(undefined);
+                            setStartDate('');
+                            setEndDate('');
                           }}
                           variant="outline"
                           size="sm"

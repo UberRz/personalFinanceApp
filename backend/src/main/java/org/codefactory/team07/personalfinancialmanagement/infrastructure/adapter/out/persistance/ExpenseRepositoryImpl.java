@@ -3,6 +3,7 @@ package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapte
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Expense;
 import org.codefactory.team07.personalfinancialmanagement.domain.model.TransactionType;
@@ -38,15 +39,31 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
 
     @Override
     public List<Expense> findAll() {
-        return findAll(Optional.empty());
+        return findAll(Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     @Override
-    public List<Expense> findAll(Optional<TransactionType> transactionType) {
-        List<ExpenseEntity> entities = transactionType
-            .map(type -> jpaRepository.findAll(ExpenseSpecifications.byTransactionType(type)))
-            .orElseGet(() -> jpaRepository.findAll());
-        
+    public List<Expense> findAll(Optional<TransactionType> transactionType,
+                                 Optional<LocalDate> startDate,
+                                 Optional<LocalDate> endDate) {
+        // Build combined Specification from optional filters
+        org.springframework.data.jpa.domain.Specification<ExpenseEntity> spec = null;
+
+        if (transactionType.isPresent()) {
+            spec = ExpenseSpecifications.byTransactionType(transactionType.get());
+        }
+
+        org.springframework.data.jpa.domain.Specification<ExpenseEntity> dateSpec =
+            ExpenseSpecifications.byDateRange(startDate.orElse(null), endDate.orElse(null));
+
+        if (dateSpec != null) {
+            spec = spec == null ? dateSpec : spec.and(dateSpec);
+        }
+
+        List<ExpenseEntity> entities = spec == null
+            ? jpaRepository.findAll()
+            : jpaRepository.findAll(spec);
+
         return entities.stream()
                 .map(entity -> new Expense(
                         entity.getId(),

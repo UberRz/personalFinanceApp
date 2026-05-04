@@ -2,6 +2,8 @@ package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapte
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import org.codefactory.team07.personalfinancialmanagement.application.usecase.DeleteExpenseUseCase;
 import org.codefactory.team07.personalfinancialmanagement.application.usecase.GetExpenseHistoryUseCase;
@@ -63,21 +65,39 @@ public class ExpenseController {
 
     @GetMapping
     public ResponseEntity<List<Expense>> getHistory(
-            @RequestParam(name = "type", required = false) String type) {
+            @RequestParam(name = "type", required = false) String type,
+            @RequestParam(name = "startDate", required = false) String startDateStr,
+            @RequestParam(name = "endDate", required = false) String endDateStr) {
         try {
-            // Validación: si se envía un tipo inválido, retorna 400
+            Optional<TransactionType> transactionTypeOpt = Optional.empty();
             if (type != null && !type.isBlank()) {
                 try {
-                    TransactionType.valueOf(type.toUpperCase());
+                    transactionTypeOpt = Optional.of(TransactionType.valueOf(type.toUpperCase()));
                 } catch (IllegalArgumentException e) {
-                    return ResponseEntity.badRequest().body(null); // 400 Bad Request
+                    return ResponseEntity.badRequest().body(null); // 400 Bad Request for invalid type
                 }
-                // Si es válido, ejecuta el filtro
-                TransactionType transactionType = TransactionType.valueOf(type.toUpperCase());
-                return ResponseEntity.ok(getHistoryUseCase.execute(transactionType));
             }
-            // EC-02: Sin parámetro, retorna todas
-            return ResponseEntity.ok(getHistoryUseCase.execute());
+
+            Optional<LocalDate> startOpt = Optional.empty();
+            Optional<LocalDate> endOpt = Optional.empty();
+
+            try {
+                if (startDateStr != null && !startDateStr.isBlank()) {
+                    startOpt = Optional.of(LocalDate.parse(startDateStr));
+                }
+                if (endDateStr != null && !endDateStr.isBlank()) {
+                    endOpt = Optional.of(LocalDate.parse(endDateStr));
+                }
+            } catch (DateTimeParseException e) {
+                return ResponseEntity.badRequest().body(null); // 400 Bad Request for invalid date format
+            }
+
+            if (startOpt.isPresent() && endOpt.isPresent() && startOpt.get().isAfter(endOpt.get())) {
+                return ResponseEntity.badRequest().body(null); // 400 Bad Request if start > end
+            }
+
+            List<Expense> result = getHistoryUseCase.execute(transactionTypeOpt, startOpt, endOpt);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(null);
         }

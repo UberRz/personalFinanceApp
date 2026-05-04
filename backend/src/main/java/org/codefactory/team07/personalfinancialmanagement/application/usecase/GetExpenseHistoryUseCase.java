@@ -15,10 +15,16 @@ public class GetExpenseHistoryUseCase {
 
 
     public List<Expense> execute() {
-        return repository.findAll();
+        return repository.findAll(Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     public List<Expense> execute(TransactionType transactionType) {
-        return repository.findAll(Optional.ofNullable(transactionType));
+        return repository.findAll(Optional.ofNullable(transactionType), Optional.empty(), Optional.empty());
+    }
+
+    public List<Expense> execute(Optional<TransactionType> transactionType,
+                                 Optional<java.time.LocalDate> startDate,
+                                 Optional<java.time.LocalDate> endDate) {
+        return repository.findAll(transactionType, startDate, endDate);
     }
 }
