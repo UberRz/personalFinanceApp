@@ -4,6 +4,7 @@ import { ExpensesPage } from '@/app/pages/ExpensesPage';
 import { LoginPage } from '@/app/pages/LoginPage';
 import { RegisterPage } from '@/app/pages/RegisterPage';
 import { isAuthenticated } from '@/app/services/authService';
+import { Toaster } from "sonner"; // 1. Tu importación está perfecta aquí
 
 type PageType = 'login' | 'register' | 'home' | 'expenses';
 
@@ -69,6 +70,9 @@ export default function App() {
       {currentPage === 'register' && <RegisterPage onNavigate={handleNavigate} />}
       {currentPage === 'home' && isAuth && <Home onNavigate={handleNavigate} />}
       {currentPage === 'expenses' && isAuth && <ExpensesPage onNavigate={handleNavigate} />}
+
+      {/* 2. AGREGAMOS EL TOASTER AQUÍ ABAJO */}
+      <Toaster position="top-right" richColors closeButton />
     </>
   );
 }

@@ -4,7 +4,6 @@ import java.util.Optional;
 import org.codefactory.team07.personalfinancialmanagement.domain.model.User;
 import org.codefactory.team07.personalfinancialmanagement.domain.port.out.UserRepository;
 import org.springframework.stereotype.Component;
-
 import lombok.RequiredArgsConstructor;
 
 @Component
@@ -15,11 +14,12 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void save(User user) {
         UserEntity entity = new UserEntity(
-                null,
+                user.getId(),
                 user.getEmail(),
                 user.getPassword(),
                 user.getName(),
-                null);
+                user.getCreatedAt()
+        );
         jpaRepository.save(entity);
     }
 
@@ -31,11 +31,12 @@ public class UserRepositoryImpl implements UserRepository {
                         entity.getEmail(),
                         entity.getPassword(),
                         entity.getName(),
-                        entity.getCreatedAt()));
+                        entity.getCreatedAt()
+                ));
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return jpaRepository.findByEmail(email).isPresent();
+        return jpaRepository.existsByEmail(email);
     }
 }

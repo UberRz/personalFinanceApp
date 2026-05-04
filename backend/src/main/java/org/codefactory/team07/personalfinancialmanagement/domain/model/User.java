@@ -2,9 +2,6 @@ package org.codefactory.team07.personalfinancialmanagement.domain.model;
 
 import java.time.LocalDateTime;
 
-import lombok.Getter;
-
-@Getter
 public class User {
     private final Long id;
     private final String email;
@@ -12,10 +9,12 @@ public class User {
     private final String name;
     private final LocalDateTime createdAt;
 
+    // Constructor para nuevos registros
     public User(String email, String password, String name) {
         this(null, email, password, name, null);
     }
 
+    // Constructor completo
     public User(Long id, String email, String password, String name, LocalDateTime createdAt) {
         if (email == null || email.isBlank())
             throw new IllegalArgumentException("El email es obligatorio");
@@ -24,14 +23,12 @@ public class User {
         if (name == null || name.isBlank())
             throw new IllegalArgumentException("El nombre es obligatorio");
 
-        // Validar formato de email
         if (!isValidEmail(email))
             throw new IllegalArgumentException("El email no tiene un formato válido");
 
-        // Validar contraseña
         if (!isValidPassword(password))
             throw new IllegalArgumentException(
-                    "La contraseña debe contener mayúsculas, minúsculas, números, símbolos y tener entre 8 y 10 caracteres");
+                "La contraseña debe contener mayúsculas, minúsculas, números, símbolos y tener entre 8 y 10 caracteres");
 
         this.id = id;
         this.email = email;
@@ -45,7 +42,6 @@ public class User {
     }
 
     private static boolean isValidPassword(String password) {
-        // Debe tener 8-10 caracteres, mayúscula, minúscula, número y símbolo
         if (password.length() < 8 || password.length() > 10)
             return false;
 
@@ -56,4 +52,10 @@ public class User {
 
         return hasUpper && hasLower && hasDigit && hasSymbol;
     }
+
+    public Long getId() { return id; }
+    public String getEmail() { return email; }
+    public String getPassword() { return password; }
+    public String getName() { return name; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
 }

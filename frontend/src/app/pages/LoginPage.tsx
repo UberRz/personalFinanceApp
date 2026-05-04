@@ -25,7 +25,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     setEmailError('');
     setPasswordError('');
 
-    // Validaciones
+    // Validaciones locales
     if (!email.trim()) {
       setEmailError('El email es obligatorio');
       return;
@@ -45,20 +45,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       setIsLoading(true);
       const result = await login({ email, password });
 
-      if (result.success) {
+      if (result && result.success) {
         toast.success('Éxito', {
-          description: result.message,
+          description: result.message || 'Inicio de sesión exitoso',
         });
         // Navegar a la página de gastos
         onNavigate('expenses');
       } else {
         toast.error('Error', {
-          description: result.message,
+          description: result.message || 'Error al iniciar sesión',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Extrae el mensaje de error arrojado por el fetch/backend
+      const errorMsg = error instanceof Error ? error.message : 'Ocurrió un error inesperado';
       toast.error('Error', {
-        description: 'Ocurrió un error inesperado',
+        description: errorMsg,
       });
     } finally {
       setIsLoading(false);

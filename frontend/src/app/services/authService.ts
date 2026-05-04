@@ -1,6 +1,6 @@
 // Authentication Service
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 const API_TIMEOUT = 10000;
 
 export interface User {
@@ -14,7 +14,7 @@ export interface User {
 export interface AuthResponse {
   message: string;
   success: boolean;
-  data?: User;
+  data?: User; // Aquí viene el usuario desde el backend
 }
 
 export interface LoginCredentials {
@@ -50,18 +50,26 @@ async function apiCall<T>(
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await fetch(`${API_BASE_URL}${cleanEndpoint}`, options);
+
+    let responseData: any;
+    try {
+      responseData = await response.json();
+    } catch {
+      responseData = null;
+    }
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `HTTP ${response.status}`);
+      const errorMsg = responseData?.message || responseData?.error || `Error ${response.status}`;
+      throw new Error(errorMsg);
     }
 
     if (response.status === 204) {
       return undefined as T;
     }
 
-    return await response.json() as T;
+    return responseData as T;
   } finally {
     clearTimeout(timeout);
   }
@@ -80,9 +88,8 @@ export async function register(data: RegisterData): Promise<AuthResponse> {
       success: true
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return {
-      message: `Error: ${errorMessage}`,
+      message: error instanceof Error ? error.message : 'Error de conexión con el servidor',
       success: false
     };
   }
@@ -96,9 +103,11 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       credentials
     );
 
-    if (response.success && response.data) {
-      // Guardar token en localStorage
-      localStorage.setItem('user', JSON.stringify(response.data));
+    // GUARDADO CORRECTO:
+    // Guardamos 'response.data' si existe (el User), de lo contrario caemos en 'response'
+    if (response && response.success) {
+      const userData = response.data || response;
+      localStorage.setItem('user', JSON.stringify(userData));
     }
 
     return response || {
@@ -106,9 +115,8 @@ export async function login(credentials: LoginCredentials): Promise<AuthResponse
       success: true
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return {
-      message: `Error: ${errorMessage}`,
+      message: error instanceof Error ? error.message : 'Error de conexión con el servidor',
       success: false
     };
   }
@@ -143,18 +151,10 @@ export function validatePassword(password: string): { valid: boolean; error?: st
   const hasDigit = /\d/.test(password);
   const hasSymbol = /[!@#$%^&*()_+\-=\[\]{};:'",.<>?/\\|`~]/.test(password);
 
-  if (!hasUpper) {
-    return { valid: false, error: 'Debe contener mayúsculas' };
-  }
-  if (!hasLower) {
-    return { valid: false, error: 'Debe contener minúsculas' };
-  }
-  if (!hasDigit) {
-    return { valid: false, error: 'Debe contener números' };
-  }
-  if (!hasSymbol) {
-    return { valid: false, error: 'Debe contener símbolos' };
-  }
+  if (!hasUpper) return { valid: false, error: 'Debe contener mayúsculas' };
+  if (!hasLower) return { valid: false, error: 'Debe contener minúsculas' };
+  if (!hasDigit) return { valid: false, error: 'Debe contener números' };
+  if (!hasSymbol) return { valid: false, error: 'Debe contener símbolos' };
 
   return { valid: true };
 }

@@ -291,7 +291,7 @@ DATABASE_URL: jdbc:postgresql://postgres:5432/appfinanzas_db
 ### Frontend (opcional .env)
 
 ```bash
-REACT_APP_API_URL=http://localhost:8080
+VITE_API_URL=http://localhost:8080
 ```
 
 ---

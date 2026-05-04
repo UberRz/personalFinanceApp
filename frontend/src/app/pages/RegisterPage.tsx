@@ -6,7 +6,6 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { register, validateEmail, validatePassword } from '@/app/services/authService';
-import { Alert, AlertDescription } from '@/app/components/ui/alert';
 
 interface RegisterPageProps {
   onNavigate: (page: string) => void;
@@ -38,7 +37,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
   const handlePasswordChange = (value: string) => {
     setPassword(value);
 
-    // Actualizar requisitos
+    // Actualizar requisitos en tiempo real
     setPasswordRequirements({
       length: value.length >= 8 && value.length <= 10,
       uppercase: /[A-Z]/.test(value),
@@ -59,7 +58,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       confirmPassword: '',
     });
 
-    // Validaciones
+    // Validaciones locales
     const newErrors = {
       name: '',
       email: '',
@@ -99,20 +98,22 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       setIsLoading(true);
       const result = await register({ email, password, name });
 
-      if (result.success) {
+      if (result && result.success) {
         toast.success('Éxito', {
-          description: result.message,
+          description: result.message || 'Cuenta registrada exitosamente.',
         });
-        // Navegar a login
-        setTimeout(() => onNavigate('login'), 1000);
+        // Navegar al login tras un breve delay
+        setTimeout(() => onNavigate('login'), 1500);
       } else {
         toast.error('Error', {
-          description: result.message,
+          description: result.message || 'Error al registrar la cuenta.',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Extrae el mensaje de error devuelto por la API
+      const errorMsg = error instanceof Error ? error.message : 'Ocurrió un error inesperado';
       toast.error('Error', {
-        description: 'Ocurrió un error inesperado',
+        description: errorMsg,
       });
     } finally {
       setIsLoading(false);
