@@ -1,8 +1,10 @@
 package org.codefactory.team07.personalfinancialmanagement.application.usecase;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Expense;
+import org.codefactory.team07.personalfinancialmanagement.domain.model.TransactionType;
 import org.codefactory.team07.personalfinancialmanagement.domain.port.out.ExpenseRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -11,7 +13,12 @@ import lombok.RequiredArgsConstructor;
 public class GetExpenseHistoryUseCase {
     private final ExpenseRepository repository;
 
+
     public List<Expense> execute() {
         return repository.findAll();
+    }
+
+    public List<Expense> execute(TransactionType transactionType) {
+        return repository.findAll(Optional.ofNullable(transactionType));
     }
 }

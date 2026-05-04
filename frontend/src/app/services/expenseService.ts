@@ -174,9 +174,14 @@ export async function registerExpense(dto: ExpenseDTO): Promise<ApiResponse> {
   }
 }
 
-export async function getAllExpenses(): Promise<Expense[]> {
+export async function getAllExpenses(transactionType?: TransactionType): Promise<Expense[]> {
   try {
-    const expenses = await apiCall<Expense[]>('/expenses', 'GET');
+    let endpoint = '/expenses';
+    // Construye URL con query string si se proporciona filtro
+    if (transactionType) {
+      endpoint += `?type=${transactionType}`;
+    }
+    const expenses = await apiCall<Expense[]>(endpoint, 'GET');
     return expenses || [];
   } catch (error) {
     console.error('Error fetching expenses:', error);
@@ -186,10 +191,9 @@ export async function getAllExpenses(): Promise<Expense[]> {
 
 export async function getTotalSpent(): Promise<number> {
   try {
-    const expenses = await getAllExpenses();
-    return expenses
-      .filter((expense) => expense.type === TransactionType.GASTO)
-      .reduce((total, expense) => total + expense.amount, 0);
+    // Obtiene solo los gastos del backend
+    const expenses = await getAllExpenses(TransactionType.GASTO);
+    return expenses.reduce((total, expense) => total + expense.amount, 0);
   } catch (error) {
     console.error('Error calculating total spent:', error);
     throw error;
@@ -198,10 +202,9 @@ export async function getTotalSpent(): Promise<number> {
 
 export async function getTotalIncome(): Promise<number> {
   try {
-    const expenses = await getAllExpenses();
-    return expenses
-      .filter((expense) => expense.type === TransactionType.INGRESO)
-      .reduce((total, expense) => total + expense.amount, 0);
+    // Obtiene solo los ingresos del backend
+    const expenses = await getAllExpenses(TransactionType.INGRESO);
+    return expenses.reduce((total, expense) => total + expense.amount, 0);
   } catch (error) {
     console.error('Error calculating total income:', error);
     throw error;

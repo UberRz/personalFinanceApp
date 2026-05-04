@@ -1,6 +1,7 @@
 package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapter.in.web;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.codefactory.team07.personalfinancialmanagement.application.usecase.DeleteExpenseUseCase;
 import org.codefactory.team07.personalfinancialmanagement.application.usecase.GetExpenseHistoryUseCase;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
@@ -60,8 +62,25 @@ public class ExpenseController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Expense>> getHistory() {
-        return ResponseEntity.ok(getHistoryUseCase.execute());
+    public ResponseEntity<List<Expense>> getHistory(
+            @RequestParam(name = "type", required = false) String type) {
+        try {
+            // Validación: si se envía un tipo inválido, retorna 400
+            if (type != null && !type.isBlank()) {
+                try {
+                    TransactionType.valueOf(type.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    return ResponseEntity.badRequest().body(null); // 400 Bad Request
+                }
+                // Si es válido, ejecuta el filtro
+                TransactionType transactionType = TransactionType.valueOf(type.toUpperCase());
+                return ResponseEntity.ok(getHistoryUseCase.execute(transactionType));
+            }
+            // EC-02: Sin parámetro, retorna todas
+            return ResponseEntity.ok(getHistoryUseCase.execute());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     @DeleteMapping("/{id}")

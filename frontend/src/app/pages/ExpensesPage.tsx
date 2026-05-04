@@ -37,25 +37,31 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const [totalIncome, setTotalIncome] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingExpenses, setIsLoadingExpenses] = useState(true);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [transactionTypeFilter, setTransactionTypeFilter] = useState('');
+  const [transactionTypeFilter, setTransactionTypeFilter] = useState<TransactionType | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const budgetLimit = getBudgetLimit();
 
+  // Carga todas las transacciones al montar
   useEffect(() => {
     loadExpenses();
   }, []);
+
+  useEffect(() => {
+    loadExpenses();
+  }, [transactionTypeFilter]);
 
   const loadExpenses = async () => {
     try {
       setIsLoadingExpenses(true);
       setError(null);
-      console.log('Loading expenses...');
-      const data = await getAllExpenses();
+      console.log('Loading expenses with filter:', transactionTypeFilter);
+      
+      // Llamada al backend con filtro opcional
+      const data = await getAllExpenses(transactionTypeFilter);
       console.log('Expenses loaded:', data);
       setExpenses(data || []);
       
+      // Calcula totales solo del filtro actual
       const spent = (data || [])
         .filter((t: Expense) => t.type === TransactionType.GASTO)
         .reduce((sum: number, t: Expense) => sum + t.amount, 0);
@@ -120,35 +126,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     }
   };
 
-  const getFilteredExpenses = () => {
-    let filtered = [...expenses];
-
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((e) => {
-        const d = new Date(e.date);
-        return d >= start && d <= end;
-      });
-    } else if (startDate) {
-      const start = new Date(startDate);
-      filtered = filtered.filter((e) => new Date(e.date) >= start);
-    } else if (endDate) {
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      filtered = filtered.filter((e) => new Date(e.date) <= end);
-    }
-
-    if (transactionTypeFilter) {
-      filtered = filtered.filter((e) => e.type === transactionTypeFilter);
-    }
-
-    return filtered;
-  };
-
-  const filteredExpenses = getFilteredExpenses();
-  const isFilterActive = !!(startDate || endDate || transactionTypeFilter);
+  const isFilterActive = transactionTypeFilter !== undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
@@ -217,7 +195,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                 <CardDescription>
                   {isLoadingExpenses
                     ? 'Cargando...'
-                    : `${filteredExpenses.length} transacciones`}
+                    : `${expenses.length} transacciones`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -234,28 +212,16 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                   </div>
                 ) : (
                   <div className="space-y-6">
+                    {/* EC-01: Filtro por tipo de transacción (backend) */}
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                       <h3 className="font-semibold mb-4">Filtros</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
-                          <Label>Desde</Label>
-                          <Input
-                            type="date"
-                            value={startDate}
-                            onChange={(e) => setStartDate(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Hasta</Label>
-                          <Input
-                            type="date"
-                            value={endDate}
-                            onChange={(e) => setEndDate(e.target.value)}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Tipo</Label>
-                          <Select value={transactionTypeFilter || 'ALL'} onValueChange={(val) => setTransactionTypeFilter(val === 'ALL' ? '' : val)}>
+                          <Label>Tipo de Transacción</Label>
+                          <Select 
+                            value={transactionTypeFilter || 'ALL'} 
+                            onValueChange={(val) => setTransactionTypeFilter(val === 'ALL' ? undefined : val as TransactionType)}
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Todos" />
                             </SelectTrigger>
@@ -267,12 +233,11 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                           </Select>
                         </div>
                       </div>
+                      {/* EC-02: Botón para limpiar filtro */}
                       {isFilterActive && (
                         <Button
                           onClick={() => {
-                            setStartDate('');
-                            setEndDate('');
-                            setTransactionTypeFilter('');
+                            setTransactionTypeFilter(undefined);
                           }}
                           variant="outline"
                           size="sm"
@@ -284,21 +249,17 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
 
                     {expenses.length === 0 ? (
                       <div className="text-center py-8">
-                        <p className="text-slate-500">No hay transacciones registradas</p>
+                        <p className="text-slate-500">
+                          {transactionTypeFilter 
+                            ? `No hay ${transactionTypeFilter === TransactionType.GASTO ? 'gastos' : 'ingresos'} registrados`
+                            : 'No hay transacciones registradas'}
+                        </p>
                       </div>
                     ) : (
-                      <>
-                        {filteredExpenses.length === 0 ? (
-                          <div className="text-center py-8">
-                            <p className="text-slate-500">No hay transacciones que coincidan con los filtros</p>
-                          </div>
-                        ) : (
-                          <ExpenseList
-                            expenses={filteredExpenses}
-                            onDelete={handleDeleteExpense}
-                          />
-                        )}
-                      </>
+                      <ExpenseList
+                        expenses={expenses}
+                        onDelete={handleDeleteExpense}
+                      />
                     )}
                   </div>
                 )}

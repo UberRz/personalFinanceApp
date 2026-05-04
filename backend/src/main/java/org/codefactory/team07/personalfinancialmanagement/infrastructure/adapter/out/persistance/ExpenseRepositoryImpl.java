@@ -1,6 +1,7 @@
 package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapter.out.persistance;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Expense;
@@ -37,16 +38,25 @@ public class ExpenseRepositoryImpl implements ExpenseRepository {
 
     @Override
     public List<Expense> findAll() {
-        return jpaRepository.findAll().stream()
+        return findAll(Optional.empty());
+    }
+
+    @Override
+    public List<Expense> findAll(Optional<TransactionType> transactionType) {
+        List<ExpenseEntity> entities = transactionType
+            .map(type -> jpaRepository.findAll(ExpenseSpecifications.byTransactionType(type)))
+            .orElseGet(() -> jpaRepository.findAll());
+        
+        return entities.stream()
                 .map(entity -> new Expense(
                         entity.getId(),
                         entity.getDescription(),
                         entity.getAmount(),
-                entity.getCategory(),
-                entity.getDate(),
-                entity.getType() == null || entity.getType().isBlank()
-                    ? TransactionType.GASTO
-                    : TransactionType.valueOf(entity.getType().toUpperCase())))
+                        entity.getCategory(),
+                        entity.getDate(),
+                        entity.getType() == null || entity.getType().isBlank()
+                            ? TransactionType.GASTO
+                            : TransactionType.valueOf(entity.getType().toUpperCase())))
                 .collect(Collectors.toList());
     }
 
