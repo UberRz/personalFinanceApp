@@ -9,11 +9,12 @@ interface HomeProps {
 
 export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const [backendStatus, setBackendStatus] = useState<'connecting' | 'connected' | 'error'>('connecting');
+  const API_BASE_URL = (import.meta.env.VITE_API_URL as string) || 'http://localhost:8081';
 
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch('http://localhost:8081/actuator/health');
+        const response = await fetch(`${API_BASE_URL}/actuator/health`);
         if (response.ok) {
           setBackendStatus('connected');
         }
@@ -25,7 +26,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
     checkBackend();
     const interval = setInterval(checkBackend, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [API_BASE_URL]);
 
   const statusColor = 
     backendStatus === 'connected' ? 'bg-green-500' :
