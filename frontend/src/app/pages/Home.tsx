@@ -15,9 +15,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
     const checkBackend = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/actuator/health`);
-        if (response.ok) {
-          setBackendStatus('connected');
-        }
+        setBackendStatus(response.ok ? 'connected' : 'error');
       } catch {
         setBackendStatus('error');
       }
