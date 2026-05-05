@@ -21,14 +21,18 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    // CRÍTICO: Debe coincidir con el nombre en tu script SQL
+    @Column(name = "full_name", nullable = false) 
     private String name;
 
-    @Column(nullable = false, updatable = false)
+    // CRÍTICO: Debe coincidir con created_at en tu script SQL
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 }

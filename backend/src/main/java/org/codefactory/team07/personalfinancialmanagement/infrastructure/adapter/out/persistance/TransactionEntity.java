@@ -1,15 +1,21 @@
 package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapter.out.persistance;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.codefactory.team07.personalfinancialmanagement.domain.model.TransactionType;
+
 import java.time.LocalDate;
 
 @Entity
 @Table(name = "transactions")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExpenseEntity {
+public class TransactionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -18,10 +24,11 @@ public class ExpenseEntity {
     private Double amount;
     private String category;
 
-    @Column(name = "transaction_date") // Nombre exacto en tu DB
+    @Column(name = "transaction_date")
     private LocalDate date;
 
-    private String type; // "EXPENSE" o "INCOME"
+    @Enumerated(EnumType.STRING)
+    private TransactionType type;
 
     @Column(name = "user_id")
     private Long userId;

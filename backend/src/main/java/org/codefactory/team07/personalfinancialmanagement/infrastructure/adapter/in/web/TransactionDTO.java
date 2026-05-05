@@ -5,10 +5,12 @@ import java.time.LocalDate;
 import lombok.Data;
 
 @Data
-public class ExpenseDTO {
+public class TransactionDTO {
+    private long id;
     private String description;
     private double amount;
-    private String category; // Viene como String y lo convertimos a Enum
+    private String category;
     private LocalDate date;
     private String type;
+    private Long userId;
 }

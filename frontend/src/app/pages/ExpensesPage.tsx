@@ -25,7 +25,7 @@ import {
   ExpenseDTO,
   TransactionType,
 } from '@/app/services/expenseService';
-import { logout } from '@/app/services/authService';
+import { logout, getAuthenticatedUser } from '@/app/services/authService';
 
 interface ExpensesPageProps {
   onNavigate: (page: string) => void;
@@ -33,6 +33,7 @@ interface ExpensesPageProps {
 
 export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: ExpensesPageProps) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]); // Guardar TODOS los gastos
   const [totalSpent, setTotalSpent] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,23 +44,37 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const [error, setError] = useState<string | null>(null);
   const budgetLimit = getBudgetLimit();
 
-  // Carga todas las transacciones al montar y cuando cambian filtros
+  // Al montar: carga TODOS los gastos y calcula estadísticas globales
   useEffect(() => {
-    loadExpenses();
-  }, [transactionTypeFilter, startDate, endDate]);
+    loadAllExpenses();
+  }, []);
 
-  const loadExpenses = async () => {
+  // Cuando cambian filtros: solo actualiza la vista, no las estadísticas
+  useEffect(() => {
+    applyFilters();
+  }, [transactionTypeFilter, startDate, endDate, allExpenses]);
+
+  const loadAllExpenses = async () => {
     try {
       setIsLoadingExpenses(true);
       setError(null);
-      console.log('Loading expenses with filter:', transactionTypeFilter);
       
-      // Llamada al backend con filtros opcionales
-      const data = await getAllExpenses(transactionTypeFilter, startDate || undefined, endDate || undefined);
-      console.log('Expenses loaded:', data);
-      setExpenses(data || []);
+      const user = getAuthenticatedUser();
+      if (!user || !user.id) {
+        console.error('User not authenticated or missing ID');
+        setError('Usuario no autenticado');
+        setIsLoadingExpenses(false);
+        return;
+      }
       
-      // Calcula totales solo del filtro actual
+      console.log('Loading all expenses for userId:', user.id);
+      
+      // Cargar TODOS los gastos sin filtrar
+      const data = await getAllExpenses(user.id);
+      console.log('All expenses loaded:', data);
+      setAllExpenses(data || []);
+      
+      // Calcular totales GLOBALES (sin filtros)
       const spent = (data || [])
         .filter((t: Expense) => t.type === TransactionType.GASTO)
         .reduce((sum: number, t: Expense) => sum + t.amount, 0);
@@ -81,6 +96,25 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     }
   };
 
+  const applyFilters = () => {
+    let filtered = [...allExpenses];
+
+    // Aplicar filtro de tipo
+    if (transactionTypeFilter) {
+      filtered = filtered.filter((t: Expense) => t.type === transactionTypeFilter);
+    }
+
+    // Aplicar filtro de fecha
+    if (startDate) {
+      filtered = filtered.filter((t: Expense) => new Date(t.date) >= new Date(startDate));
+    }
+    if (endDate) {
+      filtered = filtered.filter((t: Expense) => new Date(t.date) <= new Date(endDate));
+    }
+
+    setExpenses(filtered);
+  };
+
   const handleSubmitExpense = async (dto: ExpenseDTO) => {
     try {
       setIsLoading(true);
@@ -89,7 +123,8 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
         toast.success('Éxito', {
           description: result.message,
         });
-        await loadExpenses();
+        // Recargar todos los gastos para actualizar estadísticas
+        await loadAllExpenses();
       } else {
         toast.error('Error', {
           description: result.message,
@@ -111,7 +146,8 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
         toast.success('Éxito', {
           description: result.message,
         });
-        await loadExpenses();
+        // Recargar todos los gastos para actualizar estadísticas
+        await loadAllExpenses();
       } else {
         toast.error('Error', {
           description: result.message,
@@ -122,7 +158,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
         description: 'Error inesperado al eliminar',
       });
     }
-  };
+  };;
 
   const isFilterActive = transactionTypeFilter !== undefined;
 

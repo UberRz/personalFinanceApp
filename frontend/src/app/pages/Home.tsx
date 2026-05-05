@@ -13,7 +13,7 @@ export const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const response = await fetch('http://localhost:8080/actuator/health');
+        const response = await fetch('http://localhost:8081/actuator/health');
         if (response.ok) {
           setBackendStatus('connected');
         }

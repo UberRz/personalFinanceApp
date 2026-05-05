@@ -1,6 +1,6 @@
 // Backend API Service - Personal Financial Management
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const API_TIMEOUT = 10000;
 
 export enum TransactionType {
@@ -37,6 +37,7 @@ export interface ExpenseDTO {
   category: string;
   date: string;
   type?: TransactionType;
+  userId: number;
 }
 
 export interface ApiResponse {
@@ -76,7 +77,6 @@ export function getTransactionTypeLabel(type: TransactionType): string {
   return transactionTypeLabels[type];
 }
 
-// Validaciones del dominio (igual que en el backend)
 function validateExpense(dto: ExpenseDTO): void {
   if (dto.amount <= 0) {
     throw new Error("El monto debe ser mayor a 0");
@@ -101,7 +101,6 @@ function validateExpense(dto: ExpenseDTO): void {
   }
 }
 
-// Helper function for API calls
 async function apiCall<T>(
   endpoint: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
@@ -130,7 +129,6 @@ async function apiCall<T>(
       throw new Error(errorText || `HTTP ${response.status}`);
     }
 
-    // Handle empty responses (204 No Content)
     if (response.status === 204) {
       return undefined as T;
     }
@@ -141,81 +139,70 @@ async function apiCall<T>(
   }
 }
 
-// API Service Functions
 export async function registerExpense(dto: ExpenseDTO): Promise<ApiResponse> {
   try {
     validateExpense(dto);
     const type = dto.type ?? TransactionType.GASTO;
 
-    const response = await apiCall<ApiResponse>(
-      '/expenses',
+    return await apiCall<ApiResponse>(
+      '/transactions',
       'POST',
       {
         description: dto.description,
         amount: dto.amount,
         category: dto.category.toUpperCase(),
         date: dto.date,
-        type
+        type,
+        userId: dto.userId
       }
     );
-
-    return response || {
-      message: type === TransactionType.INGRESO
-        ? 'Ingreso registrado exitosamente.'
-        : 'Gasto registrado exitosamente.',
-      success: true
-    };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
     return {
-      message: `Error en los datos: ${errorMessage}`,
+      message: `Error: ${error instanceof Error ? error.message : 'Desconocido'}`,
       success: false
     };
   }
 }
-
-export async function getAllExpenses(transactionType?: TransactionType, startDate?: string, endDate?: string): Promise<Expense[]> {
+export async function getAllExpenses(
+  userId: number,
+  transactionType?: TransactionType,
+  startDate?: string,
+  endDate?: string
+): Promise<Expense[]> {
   try {
-    let endpoint = '/expenses';
-    // Construye URL con query string si se proporciona filtro
+    let endpoint = `/transactions/history/${userId}`;
     const params: string[] = [];
-    if (transactionType) params.push(`type=${encodeURIComponent(transactionType)}`);
-    if (startDate) params.push(`startDate=${encodeURIComponent(startDate)}`);
-    if (endDate) params.push(`endDate=${encodeURIComponent(endDate)}`);
+
+    // Solo agregar el tipo si es válido
+    if (transactionType) {
+      params.push(`type=${transactionType}`);
+    }
+
+    if (startDate) params.push(`startDate=${startDate}`);
+    if (endDate) params.push(`endDate=${endDate}`);
+
     if (params.length) endpoint += `?${params.join('&')}`;
+
     const expenses = await apiCall<Expense[]>(endpoint, 'GET');
     return expenses || [];
   } catch (error) {
     console.error('Error fetching expenses:', error);
-    throw error;
+    return [];
   }
 }
 
-export async function getTotalSpent(): Promise<number> {
-  try {
-    // Obtiene solo los gastos del backend
-    const expenses = await getAllExpenses(TransactionType.GASTO);
-    return expenses.reduce((total, expense) => total + expense.amount, 0);
-  } catch (error) {
-    console.error('Error calculating total spent:', error);
-    throw error;
-  }
+export async function getTotalSpent(userId: number): Promise<number> {
+  const expenses = await getAllExpenses(userId, TransactionType.GASTO);
+  return expenses.reduce((total, expense) => total + expense.amount, 0);
 }
 
-export async function getTotalIncome(): Promise<number> {
-  try {
-    // Obtiene solo los ingresos del backend
-    const expenses = await getAllExpenses(TransactionType.INGRESO);
-    return expenses.reduce((total, expense) => total + expense.amount, 0);
-  } catch (error) {
-    console.error('Error calculating total income:', error);
-    throw error;
-  }
+export async function getTotalIncome(userId: number): Promise<number> {
+  const expenses = await getAllExpenses(userId, TransactionType.INGRESO);
+  return expenses.reduce((total, expense) => total + expense.amount, 0);
 }
-
 export async function deleteExpense(id: number): Promise<ApiResponse> {
   try {
-    const response = await apiCall<ApiResponse>(`/expenses/${id}`, 'DELETE');
+    const response = await apiCall<ApiResponse>(`/transactions/${id}`, 'DELETE');
     return response || {
       message: 'Gasto eliminado correctamente.',
       success: true

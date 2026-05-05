@@ -17,6 +17,7 @@ import {
   getCategoryLabel,
   type ExpenseDTO,
 } from '../services/expenseService';
+import { getAuthenticatedUser } from '../services/authService';
 import { Calendar } from 'lucide-react';
 
 interface ExpenseFormProps {
@@ -36,12 +37,19 @@ export function ExpenseForm({ onSubmit, isLoading }: ExpenseFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    const user = getAuthenticatedUser();
+    if (!user || !user.id) {
+      alert('Usuario no autenticado');
+      return;
+    }
+
     onSubmit({
       description,
       amount: parseFloat(amount),
       category,
       date,
-      type
+      type,
+      userId: user.id
     });
 
     // Limpiar formulario

@@ -1,32 +1,31 @@
 package org.codefactory.team07.personalfinancialmanagement.config;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.*;
 
 @Configuration
-public class CorsConfiguration implements WebMvcConfigurer {
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/auth/**")
-                .allowedOrigins("http://localhost:3000", "http://frontend:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
+public class CorsConfiguration {
 
-        registry.addMapping("/expenses/**")
-                .allowedOrigins("http://localhost:3000", "http://frontend:3000")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
 
-        registry.addMapping("/actuator/**")
-                .allowedOrigins("http://localhost:3000", "http://frontend:3000")
-                .allowedMethods("GET", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true)
-                .maxAge(3600);
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+
+                registry.addMapping("/**")
+                        .allowedOriginPatterns("http://localhost:*")
+                        .allowedMethods("*")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+
+                // 👇 ESTO ES LO QUE TE FALTA
+                registry.addMapping("/actuator/**")
+                        .allowedOriginPatterns("http://localhost:*")
+                        .allowedMethods("*")
+                        .allowedHeaders("*");
+            }
+        };
     }
 }

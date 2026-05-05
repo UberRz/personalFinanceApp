@@ -1,6 +1,6 @@
 // Authentication Service
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const API_TIMEOUT = 10000;
 
 export interface User {

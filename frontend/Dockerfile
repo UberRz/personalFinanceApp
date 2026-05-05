@@ -3,7 +3,7 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-ARG VITE_API_URL=http://localhost:8080
+ARG VITE_API_URL=http://localhost:8081
 
 # Copy package files
 COPY package*.json ./

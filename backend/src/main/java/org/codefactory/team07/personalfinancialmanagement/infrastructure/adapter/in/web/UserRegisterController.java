@@ -15,6 +15,11 @@ public class UserRegisterController {
 
     @PostMapping
     public ResponseEntity<ApiResponse> register(@Valid @RequestBody RegisterUserDTO dto) {
+        // Validar email manualmente
+        if (!isValidEmail(dto.getEmail())) {
+            return ResponseEntity.badRequest().body(new ApiResponse("El email no tiene un formato válido", false));
+        }
+
         try {
             User user = new User(dto.getEmail(), dto.getPassword(), dto.getName());
             String result = registerUserUseCase.execute(user);
@@ -22,5 +27,12 @@ public class UserRegisterController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(e.getMessage(), false));
         }
+    }
+
+    private boolean isValidEmail(String email) {
+    if (email == null) return false;
+    // Regex corregido para Java
+    return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$");
+
     }
 }
