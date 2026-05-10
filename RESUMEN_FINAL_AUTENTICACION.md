@@ -92,9 +92,10 @@ UserRepository (PostgreSQL)
 
 ```
 Frontend (http://localhost:3000)
-         ←→ CORS permitido ←→ Backend (http://localhost:8080)
+         ←→ CORS permitido ←→ Backend (http://localhost:8081)
                                        ↓
-                              PostgreSQL (localhost:5432)
+                    PostgreSQL en Render.com (nube)
+                dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com:5432
 ```
 
 ---
@@ -153,22 +154,23 @@ Can register and login test users:
 
 ## 🔗 Acceso a Servicios
 
-| Servicio   | URL                   | Puerto | Estado     |
-| ---------- | --------------------- | ------ | ---------- |
-| Frontend   | http://localhost:3000 | 3000   | ✅ Running |
-| Backend    | http://localhost:8080 | 8080   | ✅ Running |
-| PostgreSQL | localhost:5432        | 5432   | ✅ Healthy |
+| Servicio   | URL / Host                                               | Puerto | Estado     |
+| ---------- | -------------------------------------------------------- | ------ | ---------- |
+| Frontend   | http://localhost:3000                                    | 3000   | ✅ Running |
+| Backend    | http://localhost:8081                                    | 8081   | ✅ Running |
+| PostgreSQL | dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com     | 5432   | ✅ Healthy |
 
 ---
 
 ## 📝 Endpoints de API
 
-| Método | Endpoint         | Authenticate | Response                         |
-| ------ | ---------------- | ------------ | -------------------------------- |
-| POST   | `/auth/register` | ❌           | `{message, success, data}`       |
-| POST   | `/auth/login`    | ❌           | `{message, success, data: User}` |
-| GET    | `/expenses`      | ✅           | `[]`                             |
-| POST   | `/expenses`      | ✅           | `{expense}`                      |
+| Método | Endpoint                  | Authenticate | Response                         |
+| ------ | ------------------------- | ------------ | -------------------------------- |
+| POST   | `/auth/register`          | ❌           | `{message, success, data}`       |
+| POST   | `/auth/login`             | ❌           | `{message, success, data: User}` |
+| GET    | `/transactions/user/{id}` | ✅           | `[]`                             |
+| POST   | `/transactions`           | ✅           | `{transaction}`                  |
+| DELETE | `/transactions/{id}`      | ✅           | `{message}`                      |
 
 ---
 
@@ -197,7 +199,18 @@ Can register and login test users:
 
 ---
 
-**Últimas Pruebas Ejecutadas**: 18 de Abril, 2026  
+**Últimas Pruebas Ejecutadas**: 10 de Mayo, 2026 (Sprint 2)
+
+---
+
+## ✨ Sprint 2: Mejoras Post-Autenticación
+
+- ✅ **Puerto actualizado**: 8080 → 8081
+- ✅ **BD migrada a la nube**: PostgreSQL en Render.com
+- ✅ **Nuevos endpoints**: /transactions (en lugar de /expenses)
+- ✅ **Tipos de transacciones**: GASTO e INGRESO separados
+- ✅ **Filtros**: Por tipo de transacción y rango de fechas
+- ✅ **Autenticación**: Sigue siendo 100% funcional  
 **Timestamp**: 21:05 UTC-5  
 **Versión del Sistema**: 1.0
 

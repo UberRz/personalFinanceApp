@@ -1,57 +1,111 @@
 # 🧪 Guía de Pruebas del Sistema AppFinanzas
 
-## ✅ Prueba 1: Acceder a la Aplicación
+**Última actualización:** 2026-05-10 (Sprint 2)
+
+> Esta guía contiene pruebas completas incluyendo autenticación, transacciones, filtros y validaciones.
+
+---
+
+## ✨ Sprint 2: Nuevas Funcionalidades de Prueba
+
+- ✅ Autenticación (Registro e Inicio de Sesión)
+- ✅ Transacciones de Ingresos y Gastos
+- ✅ Filtros por Fecha
+- ✅ Filtros por Tipo de Transacción
+- ✅ Resumen de totales (ingresos y gastos)
+
+---
+
+## ✅ Prueba 1: Acceder a la Aplicación y Login
 
 1. Abre el navegador
 2. Ve a: **http://localhost:3000**
-3. Deberías ver la página de bienvenida con:
-   - Título: "¡Bienvenido a AppFinanzas!"
-   - Icono de billetera
-   - Información de la arquitectura
-   - Botón "Comenzar a Registrar Gastos"
+3. Deberías ver la página de Login con:
+   - Título: "Iniciar Sesión"
+   - Campo de Email
+   - Campo de Contraseña
+   - Botón "Iniciar Sesión"
+   - Link "¿No tienes cuenta? Regístrate aquí"
 
 **✅ Si ves esto → Paso 1 EXITOSO**
 
 ---
 
-## ✅ Prueba 2: Navegar a Gestión de Gastos
+## ✅ Prueba 2: Registrar un Nuevo Usuario (Sprint 2)
 
-1. En la página Home, haz click en "Comenzar a Registrar Gastos"
-2. Deberías llegar a la página de Gastos que muestra:
-   - Bienvenida: "Gestión Financiera Personal"
-   - Resumen de Presupuesto
-   - Dos tabs: "Registrar Gasto" y "Historial de Gastos"
-
-**✅ Si ves esto → Paso 2 EXITOSO**
-
----
-
-## ✅ Prueba 3: Registrar un Gasto
-
-### Rellenar el formulario:
-
-1. **Descripción**: "Almuerzo en restaurante"
-2. **Monto**: 150
-3. **Categoría**: "Alimentación"
-4. **Fecha**: (fecha actual)
-
-### Hacer click en "Registrar Gasto"
+1. En la página de Login, haz click en "¿No tienes cuenta? Regístrate aquí"
+2. Llena el formulario con:
+   - **Nombre**: "Usuario Prueba"
+   - **Email**: "prueba@test.com"
+   - **Contraseña**: "Test1234!" (debe cumplir requisitos)
+3. Haz click en "Registrarse"
 
 **Resultado esperado:**
 
-- ✅ Toast de éxito: "Gasto registrado exitosamente"
-- ✅ El gasto aparece en el historial (Tab "Historial de Gastos")
-- ✅ El total presupuesto se actualiza a $150.00
-- ✅ La barra de progreso muestra 15% (150/1000)
+- ✅ Toast de éxito: "Usuario registrado exitosamente"
+- ✅ Redirige automáticamente a Login
+
+**✅ Si funciona → Paso 2 EXITOSO**
+
+---
+
+## ✅ Prueba 3: Registrar un Gasto (Transacción Tipo GASTO)
+
+### Rellenar el formulario:
+
+1. **Tipo de Transacción**: "GASTO"
+2. **Descripción**: "Almuerzo en restaurante"
+3. **Monto**: 150
+4. **Categoría**: "Alimentación" (disponible para GASTO)
+5. **Fecha**: (fecha actual)
+
+### Hacer click en "Registrar Transacción"
+
+**Resultado esperado:**
+
+- ✅ Toast de éxito: "Transacción registrada exitosamente"
+- ✅ El gasto aparece en el historial
+- ✅ El resumen actualiza:
+  - Total Gastos: $150.00
+  - Total Ingresos: $0.00
+  - Balance: -$150.00
+- ✅ Tipo mostrado: "Gasto" (en rojo)
 
 **✅ Si todo funciona → Paso 3 EXITOSO**
 
 ---
 
-## ✅ Prueba 4: Registrar Múltiples Gastos
+## ✅ Prueba 4: Registrar un Ingreso (Sprint 2)
 
-Registra estos gastos adicionales:
+### Rellenar el formulario:
 
+1. **Tipo de Transacción**: "INGRESO"
+2. **Descripción**: "Salario mensual"
+3. **Monto**: 2000
+4. **Categoría**: "Ingreso Fijo"
+5. **Fecha**: (fecha actual)
+
+### Hacer click en "Registrar Transacción"
+
+**Resultado esperado:**
+
+- ✅ Toast de éxito: "Transacción registrada exitosamente"
+- ✅ El ingreso aparece en el historial
+- ✅ El resumen actualiza:
+  - Total Ingresos: $2000.00
+  - Total Gastos: $150.00 (del gasto anterior)
+  - Balance: $1850.00
+- ✅ Tipo mostrado: "Ingreso" (en verde)
+
+**✅ Si todo funciona → Paso 4 EXITOSO**
+
+---
+
+## ✅ Prueba 5: Registrar Múltiples Transacciones
+
+Registra estas transacciones adicionales:
+
+**GASTOS:**
 | Descripción       | Monto | Categoría       |
 | ----------------- | ----- | --------------- |
 | Pasaje transporte | 50    | Transporte      |
@@ -59,203 +113,248 @@ Registra estos gastos adicionales:
 | Película          | 75    | Entretenimiento |
 | Libros            | 200   | Educación       |
 
+**INGRESOS:**
+| Descripción | Monto | Categoría     |
+| ----------- | ----- | ------------- |
+| Bonificación| 500   | Ingreso Extra |
+| Freelance   | 300   | Ingreso Extra |
+
 **Resultado esperado:**
 
-- ✅ Total presupuesto: $575.00
-- ✅ Barra de progreso: 57.5%
-- ✅ 5 gastos en el historial
-- ✅ Todos ordenados por fecha más reciente
+- ✅ Total Gastos: $575.00
+- ✅ Total Ingresos: $2800.00
+- ✅ Balance: $2225.00
+- ✅ 9 transacciones en el historial
 
-**✅ Si todo funciona → Paso 4 EXITOSO**
+**✅ Si todo funciona → Paso 5 EXITOSO**
 
 ---
 
-## ✅ Prueba 5: Verificar Alerta de Presupuesto
+## ✅ Prueba 6: Filtrar por Tipo (Sprint 2)
 
-Registra un gasto que supere los $1,000:
-
-1. Gasto: "Viaje" - Monto: $500
-2. Click "Registrar Gasto"
+1. Selecciona Tipo: "GASTO"
+2. Click en "Aplicar Filtro"
 
 **Resultado esperado:**
-
-- ✅ Toast: "Gasto registrado. ¡ALERTA! Has superado tu presupuesto total."
-- ✅ El resumen muestra: "¡Presupuesto Superado!" en rojo
-- ✅ Total presupuesto: $1,075.00
-- ✅ Barra de progreso: 107.5% (rojo)
-
-**✅ Si aparece alerta → Paso 5 EXITOSO**
-
----
-
-## ✅ Prueba 6: Eliminar un Gasto
-
-1. En el tab "Historial de Gastos"
-2. Localiza un gasto (ej: "Almuerzo en restaurante")
-3. Haz click en el botón "Eliminar"
-
-**Resultado esperado:**
-
-- ✅ Toast: "Gasto eliminado correctamente"
-- ✅ El gasto desaparece del historial
-- ✅ El total presupuesto se actualiza (disminuye)
-- ✅ Barra de progreso se recalcula
+- ✅ Se muestran solo los gastos (5 transacciones)
+- ✅ Los ingresos desaparecen
 
 **✅ Si funciona → Paso 6 EXITOSO**
 
 ---
 
-## ✅ Prueba 7: Validaciones del Formulario
+## ✅ Prueba 7: Filtrar por Rango de Fechas (Sprint 2)
 
-### Intenta registrar sin valores válidos:
+1. Fecha Inicio: 01/05/2026
+2. Fecha Fin: 10/05/2026
+3. Click en "Aplicar Filtro"
 
-**Test 7a: Monto = 0**
+**Resultado esperado:**
+- ✅ Se muestran solo transacciones del rango
 
+**✅ Si funciona → Paso 7 EXITOSO**
+
+---
+
+## ✅ Prueba 8: Eliminar una Transacción
+
+1. En el tab "Historial"
+2. Localiza una transacción (ej: "Almuerzo en restaurante" - $150)
+3. Haz click en el botón "Eliminar"
+
+**Resultado esperado:**
+
+- ✅ Toast: "Transacción eliminada correctamente"
+- ✅ La transacción desaparece del historial
+- ✅ El resumen se actualiza
+
+**✅ Si funciona → Paso 8 EXITOSO**
+
+---
+
+## ✅ Prueba 9: Validaciones del Formulario
+
+**Test 9a: Monto = 0**
 - Resultado: ❌ Error: "El monto debe ser mayor a 0"
 
-**Test 7b: Sin categoría**
+**Test 9b: Sin categoría**
+- Resultado: ❌ Error: "Selecciona una categoría válida"
 
-- Resultado: ❌ Error: "La categoría no es válida"
-
-**Test 7c: Sin fecha**
-
+**Test 9c: Sin fecha**
 - Resultado: ❌ Error: "La fecha es obligatoria"
 
-**✅ Si aparecen errores correctos → Paso 7 EXITOSO**
+**✅ Si aparecen errores correctos → Paso 9 EXITOSO**
 
 ---
 
-## ✅ Prueba 8: Verificar Base de Datos
-
-Desde terminal, ejecuta:
+## ✅ Prueba 10: Verificar Base de Datos (Sprint 2)
 
 ```bash
-docker exec appfinanzas_postgres psql -U appuser -d appfinanzas_db -c "SELECT * FROM expenses;"
+psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
+     -U appuser -d appfinanzas_db_q1li \
+     -c "SELECT * FROM transactions;"
 ```
 
 **Resultado esperado:**
+- ✅ Se muestran todas las transacciones
 
-- ✅ Se muestran todos los gastos registrados
-- ✅ Cada uno tiene: id, description, amount, category, date
-
-**✅ Si aparecen los datos → Paso 8 EXITOSO**
+**✅ Si aparecen los datos → Paso 10 EXITOSO**
 
 ---
 
-## ✅ Prueba 9: Verificar Persistencia
+## ✅ Prueba 11: Verificar Persistencia
 
-1. Registra un gasto: "Café" - $25 - Categoría: "Alimentación"
-2. Reinicia los servicios:
-   ```bash
-   docker-compose restart
-   ```
-3. Espera 15 segundos
-4. Recarga la página en el navegador (F5)
-5. Ve al tab "Historial de Gastos"
+1. Registra un gasto: "Café" - $25
+2. Reinicia: `docker-compose restart`
+3. Recarga: F5
 
 **Resultado esperado:**
+- ✅ El gasto sigue apareciendo
 
-- ✅ El gasto "Café" sigue apareciendo
-- ✅ Todos los gastos anteriores siguen ahí
-- ✅ El total presupuesto es correcto
-
-**✅ Si los datos persisten → Paso 9 EXITOSO**
+**✅ Si persisten → Paso 11 EXITOSO**
 
 ---
 
-## ✅ Prueba 10: Verificar API Directamente
+## ✅ Prueba 12: Verificar API (Sprint 2)
 
-### Usa curl o Postman para probar:
-
-**GET - Obtener todos los gastos:**
+**Puerto: 8081** (cambió de 8080)
 
 ```bash
-curl -X GET http://localhost:8080/expenses
-```
-
-**POST - Registrar nuevo gasto:**
-
-```bash
-curl -X POST http://localhost:8080/expenses \
+# REGISTRAR USUARIO
+curl -X POST http://localhost:8081/auth/register \
   -H "Content-Type: application/json" \
-  -d '{
-    "description": "Test desde API",
-    "amount": 99.99,
-    "category": "ENTRETENIMIENTO",
-    "date": "2026-04-06"
-  }'
-```
+  -d '{"email":"api@test.com","password":"ApiTest1234!","name":"API Test"}'
 
-**DELETE - Eliminar gasto (reemplaza {id} con un ID real):**
+# OBTENER TRANSACCIONES
+curl http://localhost:8081/transactions/user/1
 
-```bash
-curl -X DELETE http://localhost:8080/expenses/1
+# REGISTRAR GASTO
+curl -X POST http://localhost:8081/transactions \
+  -H "Content-Type: application/json" \
+  -d '{"description":"Test","amount":50,"category":"ALIMENTACION","date":"2026-05-10","type":"GASTO","userId":1}'
+
+# ELIMINAR
+curl -X DELETE http://localhost:8081/transactions/1
 ```
 
 **Resultado esperado:**
+- ✅ Todos los endpoints responden
+- ✅ Puerto es 8081
 
-- ✅ GET retorna JSON con lista de gastos
-- ✅ POST retorna mensaje de éxito
-- ✅ DELETE retorna "Gasto eliminado correctamente"
-
-**✅ Si API responde → Paso 10 EXITOSO**
+**✅ Si API funciona → Paso 12 EXITOSO**
 
 ---
 
-## 📊 Resumen de Pruebas
+---
 
-| Prueba | Descripción         | Estado |
-| ------ | ------------------- | ------ |
-| 1      | Acceso a Home Page  | ⬜     |
-| 2      | Navegación a Gastos | ⬜     |
-| 3      | Registrar gasto     | ⬜     |
-| 4      | Múltiples gastos    | ⬜     |
-| 5      | Alerta presupuesto  | ⬜     |
-| 6      | Eliminar gasto      | ⬜     |
-| 7      | Validaciones        | ⬜     |
-| 8      | Base de datos       | ⬜     |
-| 9      | Persistencia        | ⬜     |
-| 10     | API directa         | ⬜     |
+## 📊 Resumen de Pruebas - Sprint 2
 
-**Total:** 10/10 pruebas
+| Prueba | Descripción                | Estado |
+| ------ | -------------------------- | ------ |
+| 1      | Acceso a Login             | ⬜     |
+| 2      | Registrar usuario          | ⬜     |
+| 3      | Registrar gasto            | ⬜     |
+| 4      | Registrar ingreso          | ⬜     |
+| 5      | Múltiples transacciones    | ⬜     |
+| 6      | Filtrar por tipo           | ⬜     |
+| 7      | Filtrar por fechas         | ⬜     |
+| 8      | Eliminar transacción       | ⬜     |
+| 9      | Validaciones               | ⬜     |
+| 10     | BD en la nube              | ⬜     |
+| 11     | Persistencia               | ⬜     |
+| 12     | API (puerto 8081)          | ⬜     |
+
+**Total:** 12/12 pruebas
 
 Marca con ✅ cada prueba que completes exitosamente.
 
 ---
 
-## 🐛 Troubleshooting
+## 🐛 Troubleshooting - Sprint 2
 
 ### "El frontend no carga"
 
 ```bash
 docker-compose logs frontend
-docker ps | grep frontend
+docker ps | grep appfinanzas_frontend
 ```
 
-### "No puedo conectar al backend"
+### "No puedo conectar al backend (puerto 8081)"
 
 ```bash
-# Verifica que el backend esté corriendo
-curl http://localhost:8080/actuator/health
+# ✨ Sprint 2: Puerto cambió a 8081
+curl http://localhost:8081/transactions/user/1
+
+# Ver logs
+docker-compose logs backend
+```
+
+### "El login falla"
+
+```bash
+# Verifica que el usuario existe en la BD en la nube
+psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
+     -U appuser -d appfinanzas_db_q1li \
+     -c "SELECT * FROM users;"
 ```
 
 ### "Los datos no se guardan"
 
 ```bash
-# Verifica que PostgreSQL esté responsive
-docker exec appfinanzas_postgres pg_isready
+# ✨ Sprint 2: BD está en Render.com (nube)
+# Verifica conexión
+psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
+     -U appuser -d appfinanzas_db_q1li \
+     -c "SELECT NOW();"
 ```
 
-### "Status "unhealthy" pero funciona"
+### "Puerto 8081 en uso"
 
-- Esto es normal si no hay healthcheck. El servicio sigue funcionando.
+```bash
+# Windows
+netstat -ano | findstr :8081
+
+# Mac/Linux
+lsof -i :8081
+```
 
 ---
 
-## 📝 Notas
+## 📝 Notas - Sprint 2
 
-- Todos los datos se guardan en PostgreSQL
-- El límite de presupuesto es $1,000
-- Las 6 categorías son: Alimentación, Transporte, Vivienda, Entretenimiento, Salud, Educación
-- Los datos persisten entre reinicios de contenedores
-- Los volúmenes están en `./volumes/`
+### Cambios principales desde Sprint 1:
+- ✨ **Autenticación**: Registro e inicio de sesión con email y contraseña
+- ✨ **BD en la nube**: Render.com PostgreSQL (no local)
+- ✨ **Puerto cambiado**: 8081 (anteriormente 8080)
+- ✨ **Tipos de transacciones**: GASTO e INGRESO separados
+- ✨ **Categorías dinámicas**: Diferentes según tipo de transacción
+- ✨ **Filtros**: Por tipo y por rango de fechas
+
+### Características:
+- Los datos se guardan en PostgreSQL en Render.com
+- El balance es: Total Ingresos - Total Gastos
+- Cada usuario solo ve sus propias transacciones
+- Validación de categorías según tipo (GASTO/INGRESO)
+- Las fechas se pueden filtrar por rango
+
+### Categorías por Tipo:
+
+**GASTO:**
+- Alimentación
+- Transporte
+- Entretenimiento
+- Salud
+- Educación
+- Vivienda
+
+**INGRESO:**
+- Ingreso Fijo
+- Ingreso Extra
+
+### Contraseña Requerida (Sprint 2):
+- Mínimo 8 caracteres
+- Máximo 10 caracteres
+- Al menos 1 MAYÚSCULA
+- Al menos 1 minúscula
+- Al menos 1 NÚMERO
+- Al menos 1 símbolo especial (!@#$%^&*)

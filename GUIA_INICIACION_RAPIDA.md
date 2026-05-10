@@ -89,7 +89,7 @@ mvn clean package
 java -jar target/personalfinancialmanagement-0.0.1-SNAPSHOT.jar --server.port=8081
 ```
 
-El backend estará disponible en: `http://localhost:8081` (✨ Sprint 2: puerto actualizado)
+El backend estará disponible en: `http://localhost:8081`
 
 ### Frontend (React + Vite)
 
@@ -546,3 +546,4 @@ docker-compose logs
 ---
 
 _Versión: 1.0 | Fecha: 2026-04-06_
+
