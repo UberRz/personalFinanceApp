@@ -1,0 +1,269 @@
+classDiagram
+direction LR
+namespace team07_personalfinancialmanagement {
+  class PersonalfinancialmanagementApplication {
+    + main(args: String): void
+  }
+}
+namespace application_usecase {
+  class AuthenticateUserUseCase {
+    - userRepository: UserRepository
+    + execute(email: String, password: String): User
+  }
+  class DeleteTransactionUseCase {
+    - repository: TransactionRepository
+    + execute(id: Long): void
+  }
+  class GetFilteredTransactionsUseCase {
+    - repository: TransactionRepository
+    + execute(userId: Long, type: TransactionType, start: LocalDate, end: LocalDate): List
+  }
+  class GetTransactionsUseCase {
+    - repository: TransactionRepository
+    + execute(userId: Long): List
+  }
+  class RegisterTransactionUseCase {
+    - repository: TransactionRepository
+    + execute(transaction: Transaction, userId: Long): String
+  }
+  class RegisterUserUseCase {
+    - userRepository: UserRepository
+    + execute(user: User): String
+  }
+}
+namespace personalfinancialmanagement_config {
+  class CorsConfiguration {
+    + corsConfigurer(): WebMvcConfigurer
+  }
+  class JacksonConfig {
+    + objectMapper(): ObjectMapper
+  }
+}
+namespace domain_model {
+  class Expense {
+    - category: ExpenseCategory
+    + Expense(description: String, amount: Double, category: ExpenseCategory, date: LocalDate)
+    + Expense(id: Long, description: String, amount: Double, category: ExpenseCategory, date: LocalDate)
+    + getCategoryName(): String
+  }
+  class ExpenseCategory {
+    <<enumeration>>
+    +ALIMENTACION
+    +TRANSPORTE
+    +VIVIENDA
+    +ENTRETENIMIENTO
+    +SALUD
+    +EDUCACION
+  }
+  class Income {
+    - category: IncomeCategory
+    + Income(description: String, amount: Double, category: IncomeCategory, date: LocalDate)
+    + Income(id: Long, description: String, amount: Double, category: IncomeCategory, date: LocalDate)
+    + getCategoryName(): String
+  }
+  class IncomeCategory {
+    <<enumeration>>
+    +INGRESO_FIJO
+    +INGRESO_EXTRA
+  }
+  class Transaction {
+    # id: Long
+    # description: String
+    # amount: Double
+    # date: LocalDate
+    # type: TransactionType
+    + Transaction(description: String, amount: Double, date: LocalDate, type: TransactionType)
+    + getId(): Long
+    + getDescription(): String
+    + getAmount(): Double
+    + getDate(): LocalDate
+    + getType(): TransactionType
+    + getCategoryName(): String
+  }
+  class TransactionType {
+    <<enumeration>>
+    +GASTO
+    +INGRESO
+  }
+  class User {
+    - id: Long
+    - email: String
+    - password: String
+    - name: String
+    - createdAt: LocalDateTime
+    + User(email: String, password: String, name: String)
+    + User(id: Long, email: String, password: String, name: String, createdAt: LocalDateTime)
+    - isValidEmail(email: String): boolean
+    - isValidPassword(password: String): boolean
+    + getId(): Long
+    + getEmail(): String
+    + getPassword(): String
+    + getName(): String
+    + getCreatedAt(): LocalDateTime
+  }
+}
+namespace port_out {
+  class TransactionRepository {
+    <<interface>>
+    ~ save(transaction: Transaction, userId: Long): void
+    ~ deleteById(id: Long): void
+    ~ findAllByUserId(userId: Long): List
+    ~ findById(id: Long): Optional
+    ~ findFiltered(userId: Long, type: TransactionType, start: LocalDate, end: LocalDate): List
+  }
+  class UserRepository {
+    <<interface>>
+    ~ save(user: User): void
+    ~ findByEmail(email: String): Optional
+    ~ existsByEmail(email: String): boolean
+  }
+}
+namespace in_web {
+  class ApiResponse {
+    - message: String
+    - success: boolean
+    - data: Object
+    + ApiResponse(message: String, success: boolean)
+  }
+  class AuthController {
+    - authenticateUserUseCase: AuthenticateUserUseCase
+    + login(dto: LoginUserDTO): ResponseEntity
+    - isValidEmail(email: String): boolean
+  }
+  class LoginUserDTO {
+    - email: String
+    - password: String
+  }
+  class RegisterUserDTO {
+    - email: String
+    - password: String
+    - name: String
+  }
+  class TransactionController {
+    - registerUseCase: RegisterTransactionUseCase
+    - deleteUseCase: DeleteTransactionUseCase
+    - getUseCase: GetTransactionsUseCase
+    - getFilteredUseCase: GetFilteredTransactionsUseCase
+    + register(dto: TransactionDTO): ResponseEntity
+    + getAllByUserId(userId: Long): ResponseEntity
+    + delete(id: Long): ResponseEntity
+    + getHistory(userId: Long, type: String, startDate: LocalDate, endDate: LocalDate): ResponseEntity
+    - mapToDTO(transaction: Transaction): TransactionDTO
+  }
+  class TransactionDTO {
+    - id: long
+    - description: String
+    - amount: double
+    - category: String
+    - date: LocalDate
+    - type: String
+    - userId: Long
+  }
+  class UserRegisterController {
+    - registerUserUseCase: RegisterUserUseCase
+    + register(dto: RegisterUserDTO): ResponseEntity
+    - isValidEmail(email: String): boolean
+  }
+}
+namespace out_persistance {
+  class ExpenseEntity {
+    - id: Long
+    - description: String
+    - amount: Double
+    - category: String
+    - date: LocalDate
+    - type: String
+    - userId: Long
+  }
+  class JpaTransactionRepository {
+    <<interface>>
+    ~ findByUserId(userId: Long): List
+  }
+  class JpaUserRepository {
+    <<interface>>
+    ~ findByEmail(email: String): Optional
+  }
+  class TransactionEntity {
+    - id: Long
+    - description: String
+    - amount: Double
+    - category: String
+    - date: LocalDate
+    - type: TransactionType
+    - userId: Long
+  }
+  class TransactionRepositoryImpl {
+    - jpaRepository: JpaTransactionRepository
+    + save(transaction: Transaction, userId: Long): void
+    + deleteById(id: Long): void
+    + findAllByUserId(userId: Long): List
+    + findById(id: Long): Optional
+    + findFiltered(userId: Long, type: TransactionType, start: LocalDate, end: LocalDate): List
+    - mapToDomain(entity: TransactionEntity): Transaction
+  }
+  class TransactionSpecifications {
+    + byUserId(userId: Long): Specification
+    + byType(type: TransactionType): Specification
+    + byDateRange(start: LocalDate, end: LocalDate): Specification
+  }
+  class UserEntity {
+    - id: Long
+    - email: String
+    - password: String
+    - name: String
+    - createdAt: LocalDateTime
+    # onCreate(): void
+  }
+  class UserRepositoryImpl {
+    - jpaUserRepository: JpaUserRepository
+    + save(user: User): void
+    + findByEmail(email: String): Optional
+    + existsByEmail(email: String): boolean
+  }
+}
+AuthController ..> ApiResponse
+AuthController ..> AuthenticateUserUseCase
+AuthController ..> LoginUserDTO
+AuthenticateUserUseCase ..> User
+AuthenticateUserUseCase ..> UserRepository
+DeleteTransactionUseCase ..> TransactionRepository
+Expense ..> ExpenseCategory
+GetFilteredTransactionsUseCase ..> Transaction
+GetFilteredTransactionsUseCase ..> TransactionRepository
+GetFilteredTransactionsUseCase ..> TransactionType
+GetTransactionsUseCase ..> Transaction
+GetTransactionsUseCase ..> TransactionRepository
+Income ..> IncomeCategory
+JpaTransactionRepository ..> TransactionEntity
+JpaUserRepository ..> UserEntity
+RegisterTransactionUseCase ..> Transaction
+RegisterTransactionUseCase ..> TransactionRepository
+RegisterUserUseCase ..> User
+RegisterUserUseCase ..> UserRepository
+Transaction <|-- Expense
+Transaction <|-- Income
+Transaction ..> TransactionType
+TransactionController ..> ApiResponse
+TransactionController ..> DeleteTransactionUseCase
+TransactionController ..> GetFilteredTransactionsUseCase
+TransactionController ..> GetTransactionsUseCase
+TransactionController ..> RegisterTransactionUseCase
+TransactionController ..> Transaction
+TransactionController ..> TransactionDTO
+TransactionEntity ..> TransactionType
+TransactionRepository ..> Transaction
+TransactionRepository <|.. TransactionRepositoryImpl
+TransactionRepository ..> TransactionType
+TransactionRepositoryImpl ..> JpaTransactionRepository
+TransactionRepositoryImpl ..> Transaction
+TransactionRepositoryImpl ..> TransactionEntity
+TransactionRepositoryImpl ..> TransactionType
+TransactionSpecifications ..> TransactionEntity
+TransactionSpecifications ..> TransactionType
+UserRegisterController ..> ApiResponse
+UserRegisterController ..> RegisterUserDTO
+UserRegisterController ..> RegisterUserUseCase
+UserRepository ..> User
+UserRepository <|.. UserRepositoryImpl
+UserRepositoryImpl ..> JpaUserRepository
+UserRepositoryImpl ..> User
