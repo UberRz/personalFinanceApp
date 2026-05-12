@@ -1,0 +1,307 @@
+@startuml
+hide circle
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+left to right direction
+
+package "domain.model" {
+  abstract class Transaction {
+    #Long id
+    #String description
+    #Double amount
+    #LocalDate date
+    #TransactionType type
+    +Transaction(String description, Double amount, LocalDate date, TransactionType type)
+    +Long getId()
+    +String getDescription()
+    +Double getAmount()
+    +LocalDate getDate()
+    +TransactionType getType()
+    +String getCategoryName()
+  }
+
+  class Expense {
+    -ExpenseCategory category
+    +Expense(String description, Double amount, ExpenseCategory category, LocalDate date)
+    +Expense(Long id, String description, Double amount, ExpenseCategory category, LocalDate date)
+    +String getCategoryName()
+  }
+
+  class Income {
+    -IncomeCategory category
+    +Income(String description, Double amount, IncomeCategory category, LocalDate date)
+    +Income(Long id, String description, Double amount, IncomeCategory category, LocalDate date)
+    +String getCategoryName()
+  }
+
+  class User {
+    -Long id
+    -String email
+    -String password
+    -String name
+    -LocalDateTime createdAt
+    +User(String email, String password, String name)
+    +User(Long id, String email, String password, String name, LocalDateTime createdAt)
+    +Long getId()
+    +String getEmail()
+    +String getPassword()
+    +String getName()
+    +LocalDateTime getCreatedAt()
+  }
+
+  enum TransactionType {
+    GASTO
+    INGRESO
+  }
+
+  enum ExpenseCategory {
+    ALIMENTACION
+    TRANSPORTE
+    VIVIENDA
+    ENTRETENIMIENTO
+    SALUD
+    EDUCACION
+  }
+
+  enum IncomeCategory {
+    INGRESO_FIJO
+    INGRESO_EXTRA
+  }
+}
+
+package "domain.port.out" {
+  interface TransactionRepository {
+    +void save(Transaction transaction, Long userId)
+    +void deleteById(Long id)
+    +List~Transaction~ findAllByUserId(Long userId)
+    +Optional~Transaction~ findById(Long id)
+    +List~Transaction~ findFiltered(Long userId, TransactionType type, LocalDate start, LocalDate end)
+  }
+
+  interface UserRepository {
+    +void save(User user)
+    +Optional~User~ findByEmail(String email)
+    +boolean existsByEmail(String email)
+  }
+}
+
+package "application.usecase" {
+  class RegisterTransactionUseCase {
+    -TransactionRepository repository
+    +String execute(Transaction transaction, Long userId)
+  }
+
+  class DeleteTransactionUseCase {
+    -TransactionRepository repository
+    +void execute(Long id)
+  }
+
+  class GetTransactionsUseCase {
+    -TransactionRepository repository
+    +List~Transaction~ execute(Long userId)
+  }
+
+  class GetFilteredTransactionsUseCase {
+    -TransactionRepository repository
+    +List~Transaction~ execute(Long userId, TransactionType type, LocalDate start, LocalDate end)
+  }
+
+  class RegisterUserUseCase {
+    -UserRepository userRepository
+    +String execute(User user)
+  }
+
+  class AuthenticateUserUseCase {
+    -UserRepository userRepository
+    +User execute(String email, String password)
+  }
+}
+
+package "infrastructure.adapter.in.web" {
+  class ApiResponse {
+    -String message
+    -boolean success
+    -Object data
+    +ApiResponse(String message, boolean success)
+    +ApiResponse(String message, boolean success, Object data)
+  }
+
+  class LoginUserDTO {
+    -String email
+    -String password
+  }
+
+  class RegisterUserDTO {
+    -String email
+    -String password
+    -String name
+  }
+
+  class TransactionDTO {
+    -long id
+    -String description
+    -double amount
+    -String category
+    -LocalDate date
+    -String type
+    -Long userId
+  }
+
+  class AuthController {
+    -AuthenticateUserUseCase authenticateUserUseCase
+    +ResponseEntity~ApiResponse~ login(LoginUserDTO dto)
+  }
+
+  class UserRegisterController {
+    -RegisterUserUseCase registerUserUseCase
+    +ResponseEntity~ApiResponse~ register(RegisterUserDTO dto)
+  }
+
+  class TransactionController {
+    -RegisterTransactionUseCase registerUseCase
+    -DeleteTransactionUseCase deleteUseCase
+    -GetTransactionsUseCase getUseCase
+    -GetFilteredTransactionsUseCase getFilteredUseCase
+    +ResponseEntity~ApiResponse~ register(TransactionDTO dto)
+    +ResponseEntity~List~TransactionDTO~~ getAllByUserId(Long userId)
+    +ResponseEntity~ApiResponse~ delete(Long id)
+    +ResponseEntity~List~TransactionDTO~~ getHistory(Long userId, String type, LocalDate startDate, LocalDate endDate)
+  }
+}
+
+package "infrastructure.adapter.out.persistance" {
+  class TransactionEntity {
+    -Long id
+    -String description
+    -Double amount
+    -String category
+    -LocalDate date
+    -TransactionType type
+    -Long userId
+  }
+
+  class UserEntity {
+    -Long id
+    -String email
+    -String password
+    -String name
+    -LocalDateTime createdAt
+    +void onCreate()
+  }
+
+  class ExpenseEntity {
+    -Long id
+    -String description
+    -Double amount
+    -String category
+    -LocalDate date
+    -String type
+    -Long userId
+  }
+
+  interface JpaTransactionRepository {
+    +List~TransactionEntity~ findByUserId(Long userId)
+  }
+
+  interface JpaUserRepository {
+    +Optional~UserEntity~ findByEmail(String email)
+  }
+
+  class TransactionSpecifications {
+    +Specification~TransactionEntity~ byUserId(Long userId)
+    +Specification~TransactionEntity~ byType(TransactionType type)
+    +Specification~TransactionEntity~ byDateRange(LocalDate start, LocalDate end)
+  }
+
+  class TransactionRepositoryImpl {
+    -JpaTransactionRepository jpaRepository
+    +void save(Transaction transaction, Long userId)
+    +void deleteById(Long id)
+    +List~Transaction~ findAllByUserId(Long userId)
+    +Optional~Transaction~ findById(Long id)
+    +List~Transaction~ findFiltered(Long userId, TransactionType type, LocalDate start, LocalDate end)
+  }
+
+  class UserRepositoryImpl {
+    -JpaUserRepository jpaUserRepository
+    +void save(User user)
+    +Optional~User~ findByEmail(String email)
+    +boolean existsByEmail(String email)
+  }
+}
+
+package "config" {
+  class CorsConfiguration {
+    +WebMvcConfigurer corsConfigurer()
+  }
+
+  class JacksonConfig {
+    +ObjectMapper objectMapper()
+  }
+}
+
+class PersonalfinancialmanagementApplication {
+  +main(String[] args)
+}
+
+Expense --|> Transaction
+Income --|> Transaction
+Transaction --> TransactionType
+Expense --> ExpenseCategory
+Income --> IncomeCategory
+
+RegisterTransactionUseCase --> TransactionRepository
+DeleteTransactionUseCase --> TransactionRepository
+GetTransactionsUseCase --> TransactionRepository
+GetFilteredTransactionsUseCase --> TransactionRepository
+RegisterUserUseCase --> UserRepository
+AuthenticateUserUseCase --> UserRepository
+
+TransactionRepositoryImpl ..|> TransactionRepository
+UserRepositoryImpl ..|> UserRepository
+
+TransactionRepositoryImpl --> JpaTransactionRepository
+UserRepositoryImpl --> JpaUserRepository
+JpaTransactionRepository ..> TransactionEntity
+JpaUserRepository ..> UserEntity
+TransactionSpecifications ..> TransactionEntity
+TransactionSpecifications ..> TransactionType
+TransactionRepositoryImpl ..> TransactionSpecifications
+TransactionRepositoryImpl ..> TransactionEntity
+TransactionRepositoryImpl ..> Transaction
+TransactionRepositoryImpl ..> Expense
+TransactionRepositoryImpl ..> Income
+
+AuthController --> AuthenticateUserUseCase
+AuthController ..> LoginUserDTO
+AuthController ..> ApiResponse
+AuthController ..> User
+
+UserRegisterController --> RegisterUserUseCase
+UserRegisterController ..> RegisterUserDTO
+UserRegisterController ..> ApiResponse
+UserRegisterController ..> User
+
+TransactionController --> RegisterTransactionUseCase
+TransactionController --> DeleteTransactionUseCase
+TransactionController --> GetTransactionsUseCase
+TransactionController --> GetFilteredTransactionsUseCase
+TransactionController ..> TransactionDTO
+TransactionController ..> ApiResponse
+TransactionController ..> Transaction
+TransactionController ..> Expense
+TransactionController ..> Income
+TransactionController ..> TransactionType
+TransactionController ..> ExpenseCategory
+TransactionController ..> IncomeCategory
+
+TransactionEntity --> TransactionType
+CorsConfiguration ..> PersonalfinancialmanagementApplication
+JacksonConfig ..> PersonalfinancialmanagementApplication
+
+note right of ExpenseEntity
+Entidad legacy mapeada a tabla transactions;
+no se usa en los casos de uso actuales.
+end note
+
+@enduml
