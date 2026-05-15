@@ -20,7 +20,6 @@ public class CorsConfiguration {
                         .allowedHeaders("*")
                         .allowCredentials(true);
 
-                // 👇 ESTO ES LO QUE TE FALTA
                 registry.addMapping("/actuator/**")
                         .allowedOriginPatterns("http://localhost:*", "https://*.vercel.app")
                         .allowedMethods("*")

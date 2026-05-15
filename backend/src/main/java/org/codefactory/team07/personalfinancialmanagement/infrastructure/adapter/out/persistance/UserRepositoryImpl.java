@@ -18,8 +18,6 @@ public class UserRepositoryImpl implements UserRepository {
         entity.setName(user.getName());
         entity.setEmail(user.getEmail());
         entity.setPassword(user.getPassword());
-        
-        // El guardado en JPA
         jpaUserRepository.save(entity);
     }
 
@@ -36,7 +34,6 @@ public class UserRepositoryImpl implements UserRepository {
     }
     @Override
     public boolean existsByEmail(String email) {
-        // Este es el método que te faltaba y causaba el error rojo
         return jpaUserRepository.findByEmail(email).isPresent();
     }
 }

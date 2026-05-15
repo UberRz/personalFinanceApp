@@ -13,7 +13,6 @@ Documento de referencia del backend real del proyecto. Resume Swagger/OpenAPI, a
 - Dependencia activa en `pom.xml`: `springdoc-openapi-starter-webmvc-ui` `2.8.5`.
 - Ruta de OpenAPI: `http://localhost:8081/api-docs`.
 - Swagger UI: `http://localhost:8081/swagger-ui.html` o `http://localhost:8081/swagger-ui/index.html`.
-- El backend actual **no implementa JWT real**, por lo que no existe flujo de `Bearer Token` en Swagger.
 
 ### Anotaciones recomendadas
 
@@ -22,7 +21,7 @@ Documento de referencia del backend real del proyecto. Resume Swagger/OpenAPI, a
 - `@ApiResponses`
 - `@Schema`
 
-### Ejemplo mínimo
+### Ejemplo
 
 ```java
 @RestController
@@ -40,7 +39,7 @@ public class AuthController {
 }
 ```
 
-### Ejemplos JSON reales
+### Ejemplos JSON
 
 **Registro**
 
@@ -165,14 +164,14 @@ mvn test
 
 ### Endpoints principales
 
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| POST | `/auth/register` | Registrar usuario |
-| POST | `/auth/login` | Iniciar sesión |
-| POST | `/transactions` | Crear transacción |
-| GET | `/transactions/user/{userId}` | Listar transacciones del usuario |
-| GET | `/transactions/history/{userId}` | Filtrar transacciones |
-| DELETE | `/transactions/{id}` | Eliminar transacción |
+| Método | Ruta                             | Descripción                      |
+| ---    | ---                              | ---                              |
+| POST   | `/auth/register`                 | Registrar usuario                |
+| POST   | `/auth/login`                    | Iniciar sesión                   |
+| POST   | `/transactions`                  | Crear transacción                |
+| GET    | `/transactions/user/{userId}`    | Listar transacciones del usuario |
+| GET    | `/transactions/history/{userId}` | Filtrar transacciones            |
+| DELETE | `/transactions/{id}`             | Eliminar transacción             |
 
 ### Troubleshooting
 
@@ -209,7 +208,7 @@ La arquitectura hexagonal separa la lógica de negocio de los detalles técnicos
 
 ```mermaid
 erDiagram
-  USERS ||--o{ TRANSACTIONS : owns
+  USERS ||--o TRANSACTIONS : owns
 
   USERS {
     BIGINT id PK

@@ -9,12 +9,11 @@ public class User {
     private final String name;
     private final LocalDateTime createdAt;
 
-    // Constructor para nuevos registros
     public User(String email, String password, String name) {
         this(null, email, password, name, null);
     }
 
-    // Constructor completo
+    // Constructor
     public User(Long id, String email, String password, String name, LocalDateTime createdAt) {
         if (email == null || email.isBlank())
             throw new IllegalArgumentException("El email es obligatorio");

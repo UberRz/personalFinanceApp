@@ -11,9 +11,7 @@ public class JacksonConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        // Registra el módulo para manejar LocalDate, LocalTime, etc.
         mapper.registerModule(new JavaTimeModule());
-        // Evita que las fechas se manden como arreglos de números [2026, 5, 5]
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         return mapper;
     }

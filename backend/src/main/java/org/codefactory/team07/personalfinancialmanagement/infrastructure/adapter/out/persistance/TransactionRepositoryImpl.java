@@ -21,7 +21,6 @@ public class TransactionRepositoryImpl implements TransactionRepository {
     public void save(Transaction transaction, Long userId) {
         TransactionEntity entity = new TransactionEntity();
         
-        // El ID lo genera la base de datos automáticamente
         entity.setDescription(transaction.getDescription());
         entity.setAmount(transaction.getAmount());
         entity.setCategory(transaction.getCategoryName());
