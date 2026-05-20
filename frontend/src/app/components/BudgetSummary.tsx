@@ -148,7 +148,7 @@ export function BudgetSummary({ totalSpent, totalIncome }: BudgetSummaryProps) {
               placeholder="Ingresa tu presupuesto"
             />
             <Button onClick={handleDefineBudget} disabled={isSaving}>
-              {isSaving ? 'Guardando...' : 'Definir Presupuesto'}
+              {isSaving ? 'Guardando...' : 'Editar Presupuesto'}
             </Button>
           </div>
           <Progress 
