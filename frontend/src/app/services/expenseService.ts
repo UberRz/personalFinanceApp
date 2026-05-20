@@ -1,5 +1,7 @@
 // Backend API Service - Personal Financial Management
 
+import { getAuthenticatedUser, updateAuthenticatedUser } from './authService';
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const API_TIMEOUT = 10000;
 
@@ -46,6 +48,12 @@ export interface ApiResponse {
 }
 
 const BUDGET_LIMIT = 1000.0;
+
+interface BudgetUpdateResponse extends ApiResponse {
+  data?: {
+    budgetLimit?: number;
+  };
+}
 
 const transactionTypeLabels: Record<TransactionType, string> = {
   [TransactionType.GASTO]: 'Gasto',
@@ -217,5 +225,26 @@ export async function deleteExpense(id: number): Promise<ApiResponse> {
 }
 
 export function getBudgetLimit(): number {
-  return BUDGET_LIMIT;
+  const user = getAuthenticatedUser();
+  return user?.budgetLimit ?? BUDGET_LIMIT;
+}
+
+export async function updateBudgetLimit(userId: number, budgetLimit: number): Promise<ApiResponse> {
+  try {
+    const response = await apiCall<BudgetUpdateResponse>(`/users/${userId}/budget`, 'PUT', { budgetLimit });
+
+    if (response?.success) {
+      updateAuthenticatedUser({ budgetLimit: response.data?.budgetLimit ?? budgetLimit });
+    }
+
+    return response || {
+      message: 'Presupuesto actualizado correctamente.',
+      success: true,
+    };
+  } catch (error) {
+    return {
+      message: `Error: ${error instanceof Error ? error.message : 'Desconocido'}`,
+      success: false,
+    };
+  }
 }

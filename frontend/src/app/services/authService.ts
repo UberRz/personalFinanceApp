@@ -9,6 +9,7 @@ export interface User {
   name: string;
   password?: string;
   createdAt?: string;
+  budgetLimit?: number;
 }
 
 export interface AuthResponse {
@@ -134,6 +135,19 @@ export function getAuthenticatedUser(): User | null {
   } catch {
     return null;
   }
+}
+
+export function updateAuthenticatedUser(partialUser: Partial<User>): User | null {
+  const currentUser = getAuthenticatedUser();
+  if (!currentUser) return null;
+
+  const updatedUser = {
+    ...currentUser,
+    ...partialUser,
+  };
+
+  localStorage.setItem('user', JSON.stringify(updatedUser));
+  return updatedUser;
 }
 
 export function isAuthenticated(): boolean {
