@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Wallet, LogOut } from 'lucide-react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { LogOut, Wallet } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { BudgetSummary } from '@/app/components/BudgetSummary';
+import { Dashboard } from '@/app/components/Dashboard';
 import { ExpenseForm } from '@/app/components/ExpenseForm';
 import { ExpenseList } from '@/app/components/ExpenseList';
 import { Input } from '@/app/components/ui/input';
@@ -24,6 +25,7 @@ import {
   Expense,
   ExpenseDTO,
   TransactionType,
+  getCategoryLabel,
 } from '@/app/services/expenseService';
 import { logout, getAuthenticatedUser } from '@/app/services/authService';
 
@@ -43,6 +45,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const [endDate, setEndDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const budgetLimit = getBudgetLimit();
+  const currentMonthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date());
 
   // Al montar: carga TODOS los gastos y calcula estadísticas globales
   useEffect(() => {
@@ -162,6 +165,87 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
 
   const isFilterActive = transactionTypeFilter !== undefined;
 
+  const currentPeriodExpenses = useMemo(() => {
+    const now = new Date();
+    return allExpenses.filter((expense) => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate.getFullYear() === now.getFullYear() && expenseDate.getMonth() === now.getMonth();
+    });
+  }, [allExpenses]);
+
+  const dashboardData = useMemo(() => {
+    const source = currentPeriodExpenses.length > 0 ? currentPeriodExpenses : allExpenses;
+    const hasData = source.length > 0;
+
+    const income = source
+      .filter((transaction) => transaction.type === TransactionType.INGRESO)
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    const spent = source
+      .filter((transaction) => transaction.type === TransactionType.GASTO)
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+    const available = income - spent;
+    const budgetUsed = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
+
+    const recentTransactions = [...source]
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+
+    const categoryMap = source.reduce<Record<string, number>>((accumulator, transaction) => {
+      if (transaction.type !== TransactionType.GASTO) {
+        return accumulator;
+      }
+
+      accumulator[transaction.category] = (accumulator[transaction.category] || 0) + transaction.amount;
+      return accumulator;
+    }, {});
+
+    const incomeCategoryMap = source.reduce<Record<string, number>>((accumulator, transaction) => {
+      if (transaction.type !== TransactionType.INGRESO) {
+        return accumulator;
+      }
+
+      accumulator[transaction.category] = (accumulator[transaction.category] || 0) + transaction.amount;
+      return accumulator;
+    }, {});
+
+    const categoryData = Object.entries(categoryMap)
+      .map(([category, amount]) => ({ name: getCategoryLabel(category), amount }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const incomeCategoryData = Object.entries(incomeCategoryMap)
+      .map(([category, amount]) => ({ name: getCategoryLabel(category), amount }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const topCategory = categoryData[0];
+    const topIncomeCategory = incomeCategoryData[0];
+    const transactionCount = source.length;
+    const averageTicket = transactionCount > 0 ? (income + spent) / transactionCount : 0;
+
+    return {
+      hasData,
+      income,
+      spent,
+      available,
+      budgetUsed,
+      recentTransactions,
+      categoryData,
+      incomeCategoryData,
+      topCategory,
+      topIncomeCategory,
+      transactionCount,
+      averageTicket,
+      periodLabel: currentPeriodExpenses.length > 0 ? currentMonthLabel : 'todo el historial',
+    };
+  }, [allExpenses, budgetLimit, currentMonthLabel, currentPeriodExpenses]);
+
+  // Debug: log computed dashboardData to inspect incomeCategoryData at runtime
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('Computed dashboardData:', dashboardData);
+  }, [dashboardData]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
       <Toaster position="top-right" richColors />
@@ -201,6 +285,8 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
             Controla tus ingresos y gastos
           </p>
         </div>
+
+        <Dashboard budgetLimit={budgetLimit} data={dashboardData} />
 
         {!isLoadingExpenses && <BudgetSummary totalSpent={totalSpent} totalIncome={totalIncome} />}
 
@@ -254,7 +340,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                           <Label>Tipo de Transacción</Label>
                           <Select 
                             value={transactionTypeFilter || 'ALL'} 
-                            onValueChange={(val) => setTransactionTypeFilter(val === 'ALL' ? undefined : val as TransactionType)}
+                            onValueChange={(val: string) => setTransactionTypeFilter(val === 'ALL' ? undefined : val as TransactionType)}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Todos" />
@@ -269,12 +355,12 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
 
                         <div className="space-y-2">
                           <Label>Fecha Inicio</Label>
-                          <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                          <Input type="date" value={startDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)} />
                         </div>
 
                         <div className="space-y-2">
                           <Label>Fecha Fin</Label>
-                          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                          <Input type="date" value={endDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)} />
                         </div>
                       </div>
                       {/* EC-02: Botón para limpiar filtro */}
