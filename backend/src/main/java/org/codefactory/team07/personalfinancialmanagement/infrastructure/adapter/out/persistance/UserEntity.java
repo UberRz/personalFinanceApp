@@ -21,11 +21,9 @@ public class UserEntity {
     @Column(nullable = false)
     private String password;
 
-    // CRÍTICO: Debe coincidir con el nombre en tu script SQL
     @Column(name = "full_name", nullable = false) 
     private String name;
 
-    // CRÍTICO: Debe coincidir con created_at en tu script SQL
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

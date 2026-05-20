@@ -12,7 +12,7 @@ public class RegisterTransactionUseCase {
     private final TransactionRepository repository;
 
     public String execute(Transaction transaction, Long userId) {
-        // Regla de negocio común
+
         if (transaction.getAmount() <= 0) {
             throw new IllegalArgumentException("El monto debe ser mayor a cero");
         }

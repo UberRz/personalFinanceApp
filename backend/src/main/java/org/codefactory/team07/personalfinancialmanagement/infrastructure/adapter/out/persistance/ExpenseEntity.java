@@ -18,10 +18,10 @@ public class ExpenseEntity {
     private Double amount;
     private String category;
 
-    @Column(name = "transaction_date") // Nombre exacto en tu DB
+    @Column(name = "transaction_date")
     private LocalDate date;
 
-    private String type; // "EXPENSE" o "INCOME"
+    private String type;
 
     @Column(name = "user_id")
     private Long userId;

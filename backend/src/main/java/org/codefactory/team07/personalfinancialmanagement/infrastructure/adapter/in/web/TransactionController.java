@@ -87,7 +87,6 @@ public class TransactionController {
             try {
                 transactionType = TransactionType.valueOf(type.toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Si el tipo no es válido, ignorar y traer todos
                 transactionType = null;
             }
         }
@@ -106,7 +105,7 @@ public class TransactionController {
         dto.setCategory(transaction.getCategoryName());
         dto.setDate(transaction.getDate());
         dto.setType(transaction.getType().toString());
-        dto.setUserId(null); // No solemos devolver el userId en cada línea del historial
+        dto.setUserId(null);
         return dto;
     }
 }
