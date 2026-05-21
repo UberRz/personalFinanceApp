@@ -231,13 +231,10 @@ export function getBudgetLimit(): number {
 
 export async function updateBudgetLimit(userId: number, budgetLimit: number): Promise<ApiResponse> {
   try {
-    const response = await apiCall<BudgetUpdateResponse>(`/users/${userId}/budget`, 'PUT', { budgetLimit });
+    // El presupuesto se persiste solo en el navegador para evitar depender de backend.
+    updateAuthenticatedUser({ budgetLimit });
 
-    if (response?.success) {
-      updateAuthenticatedUser({ budgetLimit: response.data?.budgetLimit ?? budgetLimit });
-    }
-
-    return response || {
+    return {
       message: 'Presupuesto actualizado correctamente.',
       success: true,
     };
