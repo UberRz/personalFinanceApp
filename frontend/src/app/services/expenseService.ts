@@ -1,3 +1,21 @@
+export interface BudgetStatus {
+  limit: number;
+  totalIncome: number;
+  totalSpent: number;
+  available: number;
+  percentageUsed: number;
+}
+
+export async function getBudgetStatus(userId: number): Promise<BudgetStatus | null> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/transactions/budget-status/${userId}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching budget status:', error);
+    return null;
+  }
+}
 // Backend API Service - Personal Financial Management
 
 import { getAuthenticatedUser, updateAuthenticatedUser } from './authService';

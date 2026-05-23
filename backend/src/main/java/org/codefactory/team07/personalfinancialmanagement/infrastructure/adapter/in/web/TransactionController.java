@@ -16,13 +16,34 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/transactions")
-@RequiredArgsConstructor
+
 public class TransactionController {
 
     private final RegisterTransactionUseCase registerUseCase;
     private final DeleteTransactionUseCase deleteUseCase;
     private final GetTransactionsUseCase getUseCase;
     private final GetFilteredTransactionsUseCase getFilteredUseCase;
+    private final org.codefactory.team07.personalfinancialmanagement.application.usecase.GetBudgetStatusUseCase getBudgetStatusUseCase;
+
+    public TransactionController(
+        RegisterTransactionUseCase registerUseCase,
+        DeleteTransactionUseCase deleteUseCase,
+        GetTransactionsUseCase getUseCase,
+        GetFilteredTransactionsUseCase getFilteredUseCase,
+        org.codefactory.team07.personalfinancialmanagement.application.usecase.GetBudgetStatusUseCase getBudgetStatusUseCase
+    ) {
+        this.registerUseCase = registerUseCase;
+        this.deleteUseCase = deleteUseCase;
+        this.getUseCase = getUseCase;
+        this.getFilteredUseCase = getFilteredUseCase;
+        this.getBudgetStatusUseCase = getBudgetStatusUseCase;
+    }
+
+    @GetMapping("/budget-status/{userId}")
+    public ResponseEntity<BudgetStatusDTO> getBudgetStatus(@PathVariable Long userId) {
+        BudgetStatusDTO status = getBudgetStatusUseCase.execute(userId);
+        return ResponseEntity.ok(status);
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse> register(@RequestBody TransactionDTO dto) {
