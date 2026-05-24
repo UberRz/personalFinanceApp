@@ -21,7 +21,7 @@ import {
   registerExpense,
   getAllExpenses,
   deleteExpense,
-  getBudgetLimit,
+  getBudgetStatus,
   Expense,
   ExpenseDTO,
   TransactionType,
@@ -44,7 +44,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const budgetLimit = getBudgetLimit();
+  const [budgetLimit, setBudgetLimit] = useState(1000);
   const currentMonthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date());
 
   // Al montar: carga TODOS los gastos y calcula estadísticas globales
@@ -87,6 +87,11 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
       
       setTotalSpent(spent);
       setTotalIncome(income);
+
+      const budgetStatus = await getBudgetStatus(user.id);
+      if (budgetStatus) {
+        setBudgetLimit(budgetStatus.budget);
+      }
     } catch (error) {
       console.error('Error loading expenses:', error);
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
@@ -288,7 +293,13 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
 
         <Dashboard budgetLimit={budgetLimit} data={dashboardData} />
 
-        {!isLoadingExpenses && <BudgetSummary totalSpent={totalSpent} totalIncome={totalIncome} />}
+        {!isLoadingExpenses && (
+          <BudgetSummary
+            totalSpent={totalSpent}
+            totalIncome={totalIncome}
+            onBudgetUpdated={setBudgetLimit}
+          />
+        )}
 
         <Tabs defaultValue="register" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

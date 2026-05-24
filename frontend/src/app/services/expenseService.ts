@@ -1,12 +1,14 @@
-export interface BudgetStatus {
-  limit: number;
+export interface BudgetStatusDTO {
+  budget: number;
   totalIncome: number;
-  totalSpent: number;
-  available: number;
+  spent: number;
+  remaining: number;
   percentageUsed: number;
+  year: number;
+  month: number;
 }
 
-export async function getBudgetStatus(userId: number): Promise<BudgetStatus | null> {
+export async function getBudgetStatus(userId: number): Promise<BudgetStatusDTO | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions/budget-status/${userId}`);
     if (!response.ok) return null;
@@ -16,9 +18,23 @@ export async function getBudgetStatus(userId: number): Promise<BudgetStatus | nu
     return null;
   }
 }
-// Backend API Service - Personal Financial Management
 
-import { getAuthenticatedUser, updateAuthenticatedUser } from './authService';
+interface BudgetCurrentResponse {
+  limit: number;
+  year: number;
+  month: number;
+}
+
+export async function getCurrentBudget(userId: number): Promise<number | null> {
+  try {
+    const response = await apiCall<BudgetCurrentResponse>(`/transactions/budget/${userId}`);
+    return response.limit;
+  } catch (error) {
+    console.error('Error fetching current budget:', error);
+    return null;
+  }
+}
+// Backend API Service - Personal Financial Management
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
 const API_TIMEOUT = 10000;
@@ -64,8 +80,6 @@ export interface ApiResponse {
   message: string;
   success: boolean;
 }
-
-const BUDGET_LIMIT = 1000.0;
 
 interface BudgetUpdateResponse extends ApiResponse {
   data?: {
@@ -242,20 +256,14 @@ export async function deleteExpense(id: number): Promise<ApiResponse> {
   }
 }
 
-export function getBudgetLimit(): number {
-  const user = getAuthenticatedUser();
-  return user?.budgetLimit ?? BUDGET_LIMIT;
-}
-
 export async function updateBudgetLimit(userId: number, budgetLimit: number): Promise<ApiResponse> {
   try {
-    // El presupuesto se persiste solo en el navegador para evitar depender de backend.
-    updateAuthenticatedUser({ budgetLimit });
+    const response = await apiCall<ApiResponse>('/transactions/budget', 'POST', {
+      userId,
+      limit: budgetLimit,
+    });
 
-    return {
-      message: 'Presupuesto actualizado correctamente.',
-      success: true,
-    };
+    return response;
   } catch (error) {
     return {
       message: `Error: ${error instanceof Error ? error.message : 'Desconocido'}`,

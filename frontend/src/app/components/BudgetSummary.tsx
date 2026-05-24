@@ -5,29 +5,44 @@ import { Input } from './ui/input';
 import { Progress } from './ui/progress';
 import { AlertCircle, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { getBudgetLimit, updateBudgetLimit } from '../services/expenseService';
+import { getBudgetStatus, updateBudgetLimit, BudgetStatusDTO } from '../services/expenseService';
 import { getAuthenticatedUser } from '../services/authService';
 import { toast } from 'sonner';
 
 interface BudgetSummaryProps {
   totalSpent: number;
   totalIncome: number;
+  onBudgetUpdated: (budget: number) => void;
 }
 
-export function BudgetSummary({ totalSpent, totalIncome }: BudgetSummaryProps) {
-  const [budgetLimit, setBudgetLimit] = useState(() => getBudgetLimit());
-  const [budgetInput, setBudgetInput] = useState(String(getBudgetLimit()));
+export function BudgetSummary({ totalSpent, totalIncome, onBudgetUpdated }: BudgetSummaryProps) {
+  const [budgetLimit, setBudgetLimit] = useState(1000);
+  const [budgetInput, setBudgetInput] = useState('1000');
+  const [budgetStatus, setBudgetStatus] = useState<BudgetStatusDTO | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    const currentBudget = getBudgetLimit();
-    setBudgetLimit(currentBudget);
-    setBudgetInput(String(currentBudget));
+    const user = getAuthenticatedUser();
+    if (user?.id) {
+      fetchBudgetStatus(user.id);
+    }
   }, []);
 
-  const percentage = (totalSpent / budgetLimit) * 100;
-  const isOverBudget = totalSpent > budgetLimit;
-  const disponible = totalIncome - totalSpent;
+  const fetchBudgetStatus = async (userId: number) => {
+    const status = await getBudgetStatus(userId);
+    if (status) {
+      setBudgetStatus(status);
+      setBudgetLimit(status.budget);
+      setBudgetInput(String(status.budget));
+      onBudgetUpdated(status.budget);
+    }
+  };
+
+  const displayedSpent = budgetStatus?.spent ?? totalSpent;
+  const displayedIncome = budgetStatus?.totalIncome ?? totalIncome;
+  const disponible = budgetStatus?.remaining ?? (budgetLimit - displayedSpent);
+  const percentage = budgetStatus?.percentageUsed ?? (budgetLimit > 0 ? (displayedSpent / budgetLimit) * 100 : 0);
+  const isOverBudget = displayedSpent > budgetLimit;
   const isOverSpent = disponible < 0;
 
   const handleDefineBudget = async () => {
@@ -56,8 +71,7 @@ export function BudgetSummary({ totalSpent, totalIncome }: BudgetSummaryProps) {
         return;
       }
 
-      setBudgetLimit(parsedBudget);
-      setBudgetInput(String(parsedBudget));
+      await fetchBudgetStatus(user.id);
       toast.success('Presupuesto actualizado correctamente.');
     } finally {
       setIsSaving(false);
@@ -127,7 +141,7 @@ export function BudgetSummary({ totalSpent, totalIncome }: BudgetSummaryProps) {
               ${disponible.toFixed(2)}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Ingresos - Gastado
+              Presupuesto restante
             </p>
           </CardContent>
         </Card>

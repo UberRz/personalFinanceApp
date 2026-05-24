@@ -3,23 +3,29 @@ package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapte
 import org.codefactory.team07.personalfinancialmanagement.domain.model.Budget;
 
 public class BudgetStatusDTO {
-    private final double limit;
+    private final double budget;
     private final double totalIncome;
-    private final double totalSpent;
-    private final double available;
+    private final double spent;
+    private final double remaining;
     private final double percentageUsed;
+    private final int year;
+    private final int month;
 
-    public BudgetStatusDTO(Budget budget) {
-        this.limit = budget.getLimit();
+    public BudgetStatusDTO(Budget budget, int year, int month) {
+        this.budget = budget.getLimit();
         this.totalIncome = budget.getTotalIncome();
-        this.totalSpent = budget.getTotalSpent();
-        this.available = budget.getAvailable();
+        this.spent = budget.getTotalSpent();
+        this.remaining = budget.getLimit() - budget.getTotalSpent();
         this.percentageUsed = budget.getPercentageUsed();
+        this.year = year;
+        this.month = month;
     }
 
-    public double getLimit() { return limit; }
+    public double getBudget() { return budget; }
     public double getTotalIncome() { return totalIncome; }
-    public double getTotalSpent() { return totalSpent; }
-    public double getAvailable() { return available; }
+    public double getSpent() { return spent; }
+    public double getRemaining() { return remaining; }
     public double getPercentageUsed() { return percentageUsed; }
+    public int getYear() { return year; }
+    public int getMonth() { return month; }
 }
