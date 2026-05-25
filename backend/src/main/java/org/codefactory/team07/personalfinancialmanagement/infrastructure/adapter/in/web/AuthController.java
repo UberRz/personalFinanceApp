@@ -3,7 +3,11 @@ package org.codefactory.team07.personalfinancialmanagement.infrastructure.adapte
 import org.codefactory.team07.personalfinancialmanagement.application.usecase.AuthenticateUserUseCase;
 import org.codefactory.team07.personalfinancialmanagement.domain.model.User;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -28,9 +32,14 @@ public class AuthController {
         }
     }
 
-    private boolean isValidEmail(String email) {
-    if (email == null) return false;
-    return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$");
+    // Cerrar Sesion
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse> logout() {
+        return ResponseEntity.ok(new ApiResponse("Sesión cerrada exitosamente", true));
+    }
 
+    private boolean isValidEmail(String email) {
+        if (email == null) return false;
+        return email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$");
     }
 }
