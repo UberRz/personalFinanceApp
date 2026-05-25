@@ -8,6 +8,39 @@ export interface BudgetStatusDTO {
   month: number;
 }
 
+export interface DashboardCategoryDTO {
+  name: string;
+  amount: number;
+}
+
+export interface DashboardTransactionDTO {
+  id: number;
+  description: string;
+  amount: number;
+  category: string;
+  date: string;
+  type: TransactionType;
+}
+
+export interface DashboardSummaryDTO {
+  hasData: boolean;
+  periodLabel: string;
+  totalIncome: number;
+  totalSpent: number;
+  available: number;
+  budgetLimit: number;
+  budgetUsed: number;
+  remainingBudget: number;
+  transactionCount: number;
+  averageTicket: number;
+  recentTransactions: DashboardTransactionDTO[];
+  expenseCategories: DashboardCategoryDTO[];
+  incomeCategories: DashboardCategoryDTO[];
+  topExpenseCategory?: DashboardCategoryDTO | null;
+  topIncomeCategory?: DashboardCategoryDTO | null;
+  lastTransaction?: DashboardTransactionDTO | null;
+}
+
 export async function getBudgetStatus(userId: number): Promise<BudgetStatusDTO | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/transactions/budget-status/${userId}`);
@@ -15,6 +48,16 @@ export async function getBudgetStatus(userId: number): Promise<BudgetStatusDTO |
     return await response.json();
   } catch (error) {
     console.error('Error fetching budget status:', error);
+    return null;
+  }
+}
+
+export async function getDashboardSummary(userId: number): Promise<DashboardSummaryDTO | null> {
+  try {
+    const response = await apiCall<DashboardSummaryDTO>(`/dashboard/${userId}`);
+    return response || null;
+  } catch (error) {
+    console.error('Error fetching dashboard summary:', error);
     return null;
   }
 }
@@ -34,6 +77,8 @@ export async function getCurrentBudget(userId: number): Promise<number | null> {
     return null;
   }
 }
+import { getAuthenticatedUser } from './authService';
+
 // Backend API Service - Personal Financial Management
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
@@ -144,16 +189,20 @@ function validateExpense(dto: ExpenseDTO): void {
 async function apiCall<T>(
   endpoint: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-  body?: unknown
+  body?: unknown,
+  extraHeaders?: Record<string, string>
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
 
   try {
+    const currentUser = getAuthenticatedUser();
     const options: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...(currentUser?.id ? { 'X-User-Id': String(currentUser.id) } : {}),
+        ...extraHeaders,
       },
       signal: controller.signal,
     };
@@ -242,7 +291,13 @@ export async function getTotalIncome(userId: number): Promise<number> {
 }
 export async function deleteExpense(id: number): Promise<ApiResponse> {
   try {
-    const response = await apiCall<ApiResponse>(`/transactions/${id}`, 'DELETE');
+    const user = getAuthenticatedUser();
+    const response = await apiCall<ApiResponse>(
+      `/transactions/${id}`,
+      'DELETE',
+      undefined,
+      user?.id ? { 'X-User-Id': String(user.id) } : undefined,
+    );
     return response || {
       message: 'Gasto eliminado correctamente.',
       success: true

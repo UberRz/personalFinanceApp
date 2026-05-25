@@ -1,11 +1,11 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LogOut, Wallet } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { BudgetSummary } from '@/app/components/BudgetSummary';
-import { Dashboard } from '@/app/components/Dashboard';
+import { Dashboard, type DashboardData } from '@/app/components/Dashboard';
 import { ExpenseForm } from '@/app/components/ExpenseForm';
 import { ExpenseList } from '@/app/components/ExpenseList';
 import { Input } from '@/app/components/ui/input';
@@ -21,11 +21,10 @@ import {
   registerExpense,
   getAllExpenses,
   deleteExpense,
-  getBudgetStatus,
+  getDashboardSummary,
   Expense,
   ExpenseDTO,
   TransactionType,
-  getCategoryLabel,
 } from '@/app/services/expenseService';
 import { logout, getAuthenticatedUser } from '@/app/services/authService';
 
@@ -45,7 +44,21 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const [endDate, setEndDate] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [budgetLimit, setBudgetLimit] = useState(1000);
-  const currentMonthLabel = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(new Date());
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    hasData: false,
+    income: 0,
+    spent: 0,
+    available: 0,
+    budgetUsed: 0,
+    recentTransactions: [],
+    categoryData: [],
+    incomeCategoryData: [],
+    topCategory: undefined,
+    topIncomeCategory: undefined,
+    transactionCount: 0,
+    averageTicket: 0,
+    periodLabel: 'todo el historial',
+  });
 
   // Al montar: carga TODOS los gastos y calcula estadísticas globales
   useEffect(() => {
@@ -72,25 +85,33 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
       
       console.log('Loading all expenses for userId:', user.id);
       
-      // Cargar TODOS los gastos sin filtrar
-      const data = await getAllExpenses(user.id);
+      const [data, summary] = await Promise.all([
+        getAllExpenses(user.id),
+        getDashboardSummary(user.id),
+      ]);
+
       console.log('All expenses loaded:', data);
       setAllExpenses(data || []);
-      
-      // Calcular totales GLOBALES (sin filtros)
-      const spent = (data || [])
-        .filter((t: Expense) => t.type === TransactionType.GASTO)
-        .reduce((sum: number, t: Expense) => sum + t.amount, 0);
-      const income = (data || [])
-        .filter((t: Expense) => t.type === TransactionType.INGRESO)
-        .reduce((sum: number, t: Expense) => sum + t.amount, 0);
-      
-      setTotalSpent(spent);
-      setTotalIncome(income);
 
-      const budgetStatus = await getBudgetStatus(user.id);
-      if (budgetStatus) {
-        setBudgetLimit(budgetStatus.budget);
+      if (summary) {
+        setDashboardData({
+          hasData: summary.hasData,
+          income: summary.totalIncome,
+          spent: summary.totalSpent,
+          available: summary.available,
+          budgetUsed: summary.budgetUsed,
+          recentTransactions: summary.recentTransactions,
+          categoryData: summary.expenseCategories,
+          incomeCategoryData: summary.incomeCategories,
+          topCategory: summary.topExpenseCategory ?? undefined,
+          topIncomeCategory: summary.topIncomeCategory ?? undefined,
+          transactionCount: summary.transactionCount,
+          averageTicket: summary.averageTicket,
+          periodLabel: summary.periodLabel,
+        });
+        setTotalSpent(summary.totalSpent);
+        setTotalIncome(summary.totalIncome);
+        setBudgetLimit(summary.budgetLimit);
       }
     } catch (error) {
       console.error('Error loading expenses:', error);
@@ -169,87 +190,6 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   };;
 
   const isFilterActive = transactionTypeFilter !== undefined;
-
-  const currentPeriodExpenses = useMemo(() => {
-    const now = new Date();
-    return allExpenses.filter((expense) => {
-      const expenseDate = new Date(expense.date);
-      return expenseDate.getFullYear() === now.getFullYear() && expenseDate.getMonth() === now.getMonth();
-    });
-  }, [allExpenses]);
-
-  const dashboardData = useMemo(() => {
-    const source = currentPeriodExpenses.length > 0 ? currentPeriodExpenses : allExpenses;
-    const hasData = source.length > 0;
-
-    const income = source
-      .filter((transaction) => transaction.type === TransactionType.INGRESO)
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-
-    const spent = source
-      .filter((transaction) => transaction.type === TransactionType.GASTO)
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-
-    const available = income - spent;
-    const budgetUsed = budgetLimit > 0 ? (spent / budgetLimit) * 100 : 0;
-
-    const recentTransactions = [...source]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
-
-    const categoryMap = source.reduce<Record<string, number>>((accumulator, transaction) => {
-      if (transaction.type !== TransactionType.GASTO) {
-        return accumulator;
-      }
-
-      accumulator[transaction.category] = (accumulator[transaction.category] || 0) + transaction.amount;
-      return accumulator;
-    }, {});
-
-    const incomeCategoryMap = source.reduce<Record<string, number>>((accumulator, transaction) => {
-      if (transaction.type !== TransactionType.INGRESO) {
-        return accumulator;
-      }
-
-      accumulator[transaction.category] = (accumulator[transaction.category] || 0) + transaction.amount;
-      return accumulator;
-    }, {});
-
-    const categoryData = Object.entries(categoryMap)
-      .map(([category, amount]) => ({ name: getCategoryLabel(category), amount }))
-      .sort((a, b) => b.amount - a.amount);
-
-    const incomeCategoryData = Object.entries(incomeCategoryMap)
-      .map(([category, amount]) => ({ name: getCategoryLabel(category), amount }))
-      .sort((a, b) => b.amount - a.amount);
-
-    const topCategory = categoryData[0];
-    const topIncomeCategory = incomeCategoryData[0];
-    const transactionCount = source.length;
-    const averageTicket = transactionCount > 0 ? (income + spent) / transactionCount : 0;
-
-    return {
-      hasData,
-      income,
-      spent,
-      available,
-      budgetUsed,
-      recentTransactions,
-      categoryData,
-      incomeCategoryData,
-      topCategory,
-      topIncomeCategory,
-      transactionCount,
-      averageTicket,
-      periodLabel: currentPeriodExpenses.length > 0 ? currentMonthLabel : 'todo el historial',
-    };
-  }, [allExpenses, budgetLimit, currentMonthLabel, currentPeriodExpenses]);
-
-  // Debug: log computed dashboardData to inspect incomeCategoryData at runtime
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('Computed dashboardData:', dashboardData);
-  }, [dashboardData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">

@@ -21,20 +21,38 @@ public class BudgetController {
     private final GetCurrentBudgetUseCase getCurrentBudgetUseCase;
 
     @GetMapping("/budget-status/{userId}")
-    public ResponseEntity<BudgetStatusDTO> getBudgetStatus(@PathVariable Long userId) {
+    public ResponseEntity<BudgetStatusDTO> getBudgetStatus(
+            @PathVariable Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long authenticatedUserId) {
+        if (authenticatedUserId != null && !authenticatedUserId.equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
+
         BudgetStatusDTO status = getBudgetStatusUseCase.execute(userId);
         return ResponseEntity.ok(status);
     }
 
     @GetMapping("/budget/{userId}")
-    public ResponseEntity<BudgetDTO> getCurrentBudget(@PathVariable Long userId) {
+    public ResponseEntity<BudgetDTO> getCurrentBudget(
+            @PathVariable Long userId,
+            @RequestHeader(value = "X-User-Id", required = false) Long authenticatedUserId) {
+        if (authenticatedUserId != null && !authenticatedUserId.equals(userId)) {
+            return ResponseEntity.status(403).build();
+        }
+
         MonthlyBudget budget = getCurrentBudgetUseCase.execute(userId);
         return ResponseEntity.ok(new BudgetDTO(budget.getLimit(), budget.getYear(), budget.getMonth()));
     }
 
     @PostMapping("/budget")
-    public ResponseEntity<ApiResponse> defineBudget(@Valid @RequestBody BudgetRequestDTO dto) {
+    public ResponseEntity<ApiResponse> defineBudget(
+            @RequestHeader(value = "X-User-Id", required = false) Long authenticatedUserId,
+            @Valid @RequestBody BudgetRequestDTO dto) {
         try {
+            if (authenticatedUserId != null && dto.getUserId() != null && !authenticatedUserId.equals(dto.getUserId())) {
+                return ResponseEntity.status(403).body(new ApiResponse("No tienes permiso para definir el presupuesto de otro usuario", false));
+            }
+
             MonthlyBudget budget = defineBudgetUseCase.execute(dto.getUserId(), dto.getLimit());
             BudgetDTO response = new BudgetDTO(budget.getLimit(), budget.getYear(), budget.getMonth());
             return ResponseEntity.status(201).body(new ApiResponse("Presupuesto definido correctamente", true, response));
