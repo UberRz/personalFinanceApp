@@ -186,6 +186,14 @@ function validateExpense(dto: ExpenseDTO): void {
   }
 }
 
+function parseJsonSafely(text: string): unknown | null {
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
+}
+
 async function apiCall<T>(
   endpoint: string,
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
@@ -213,16 +221,26 @@ async function apiCall<T>(
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
 
+    const rawText = await response.text();
+    const parsed = rawText ? parseJsonSafely(rawText) : null;
+
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || `HTTP ${response.status}`);
+      const message = parsed && typeof parsed === 'object'
+        ? (parsed as { message?: string; error?: string }).message
+          ?? (parsed as { error?: string }).error
+        : rawText;
+      throw new Error(message || `HTTP ${response.status}`);
     }
 
     if (response.status === 204) {
       return undefined as T;
     }
 
-    return await response.json() as T;
+    if (!rawText) {
+      return undefined as T;
+    }
+
+    return (parsed ?? rawText) as T;
   } finally {
     clearTimeout(timeout);
   }
@@ -313,7 +331,7 @@ export async function deleteExpense(id: number): Promise<ApiResponse> {
 
 export async function updateBudgetLimit(userId: number, budgetLimit: number): Promise<ApiResponse> {
   try {
-    const response = await apiCall<ApiResponse>('/transactions/budget', 'POST', {
+    const response = await apiCall<ApiResponse>('/transactions/budget', 'PUT', {
       userId,
       limit: budgetLimit,
     });

@@ -62,4 +62,23 @@ public class BudgetController {
             return ResponseEntity.internalServerError().body(new ApiResponse("Error interno: " + e.getMessage(), false));
         }
     }
+
+    @PutMapping("/budget")
+    public ResponseEntity<ApiResponse> updateBudget(
+            @RequestHeader(value = "X-User-Id", required = false) Long authenticatedUserId,
+            @Valid @RequestBody BudgetRequestDTO dto) {
+        try {
+            if (authenticatedUserId != null && dto.getUserId() != null && !authenticatedUserId.equals(dto.getUserId())) {
+                return ResponseEntity.status(403).body(new ApiResponse("No tienes permiso para actualizar el presupuesto de otro usuario", false));
+            }
+
+            MonthlyBudget budget = defineBudgetUseCase.execute(dto.getUserId(), dto.getLimit());
+            BudgetDTO response = new BudgetDTO(budget.getLimit(), budget.getYear(), budget.getMonth());
+            return ResponseEntity.ok(new ApiResponse("Presupuesto actualizado correctamente", true, response));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse("Error en datos: " + e.getMessage(), false));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new ApiResponse("Error interno: " + e.getMessage(), false));
+        }
+    }
 }
