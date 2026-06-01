@@ -44,18 +44,17 @@ public class BudgetController {
         return ResponseEntity.ok(new BudgetDTO(budget.getLimit(), budget.getYear(), budget.getMonth()));
     }
 
-    @PostMapping("/budget")
-    public ResponseEntity<ApiResponse> defineBudget(
+    @RequestMapping(value = "/budget", method = {RequestMethod.POST, RequestMethod.PUT})
+    public ResponseEntity<ApiResponse> upsertBudget(
             @RequestHeader(value = "X-User-Id", required = false) Long authenticatedUserId,
             @Valid @RequestBody BudgetRequestDTO dto) {
         try {
             if (authenticatedUserId != null && dto.getUserId() != null && !authenticatedUserId.equals(dto.getUserId())) {
-                return ResponseEntity.status(403).body(new ApiResponse("No tienes permiso para definir el presupuesto de otro usuario", false));
+                return ResponseEntity.status(403).body(new ApiResponse("No tienes permiso para modificar el presupuesto de otro usuario", false));
             }
-
             MonthlyBudget budget = defineBudgetUseCase.execute(dto.getUserId(), dto.getLimit());
             BudgetDTO response = new BudgetDTO(budget.getLimit(), budget.getYear(), budget.getMonth());
-            return ResponseEntity.status(201).body(new ApiResponse("Presupuesto definido correctamente", true, response));
+            return ResponseEntity.ok(new ApiResponse("Presupuesto guardado correctamente", true, response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse("Error en datos: " + e.getMessage(), false));
         } catch (Exception e) {
