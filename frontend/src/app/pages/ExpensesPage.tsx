@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, Wallet } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { toast } from 'sonner';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
@@ -34,7 +34,7 @@ interface ExpensesPageProps {
 
 export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: ExpensesPageProps) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [allExpenses, setAllExpenses] = useState<Expense[]>([]); // Guardar TODOS los gastos
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
   const [totalSpent, setTotalSpent] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,12 +60,10 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     periodLabel: 'todo el historial',
   });
 
-  // Al montar: carga TODOS los gastos y calcula estadísticas globales
   useEffect(() => {
     loadAllExpenses();
   }, []);
 
-  // Cuando cambian filtros: solo actualiza la vista, no las estadísticas
   useEffect(() => {
     applyFilters();
   }, [transactionTypeFilter, startDate, endDate, allExpenses]);
@@ -74,23 +72,19 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     try {
       setIsLoadingExpenses(true);
       setError(null);
-      
+
       const user = getAuthenticatedUser();
       if (!user || !user.id) {
-        console.error('User not authenticated or missing ID');
         setError('Usuario no autenticado');
         setIsLoadingExpenses(false);
         return;
       }
-      
-      console.log('Loading all expenses for userId:', user.id);
-      
+
       const [data, summary] = await Promise.all([
         getAllExpenses(user.id),
         getDashboardSummary(user.id),
       ]);
 
-      console.log('All expenses loaded:', data);
       setAllExpenses(data || []);
 
       if (summary) {
@@ -100,9 +94,9 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
           spent: summary.totalSpent,
           available: summary.available,
           budgetUsed: summary.budgetUsed,
-          recentTransactions: summary.recentTransactions,
-          categoryData: summary.expenseCategories,
-          incomeCategoryData: summary.incomeCategories,
+          recentTransactions: summary.recentTransactions || [],
+          categoryData: summary.expenseCategories || [],
+          incomeCategoryData: summary.incomeCategories || [],
           topCategory: summary.topExpenseCategory ?? undefined,
           topIncomeCategory: summary.topIncomeCategory ?? undefined,
           transactionCount: summary.transactionCount,
@@ -114,7 +108,6 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
         setBudgetLimit(summary.budgetLimit);
       }
     } catch (error) {
-      console.error('Error loading expenses:', error);
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
       setError(errorMsg);
       toast.error('Error', {
@@ -128,12 +121,9 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
   const applyFilters = () => {
     let filtered = [...allExpenses];
 
-    // Aplicar filtro de tipo
     if (transactionTypeFilter) {
       filtered = filtered.filter((t: Expense) => t.type === transactionTypeFilter);
     }
-
-    // Aplicar filtro de fecha
     if (startDate) {
       filtered = filtered.filter((t: Expense) => new Date(t.date) >= new Date(startDate));
     }
@@ -149,20 +139,13 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
       setIsLoading(true);
       const result = await registerExpense(dto);
       if (result.success) {
-        toast.success('Éxito', {
-          description: result.message,
-        });
-        // Recargar todos los gastos para actualizar estadísticas
+        toast.success('Éxito', { description: result.message });
         await loadAllExpenses();
       } else {
-        toast.error('Error', {
-          description: result.message,
-        });
+        toast.error('Error', { description: result.message });
       }
     } catch (error) {
-      toast.error('Error', {
-        description: 'Ocurrió un error inesperado',
-      });
+      toast.error('Error', { description: 'Ocurrió un error inesperado' });
     } finally {
       setIsLoading(false);
     }
@@ -172,29 +155,20 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     try {
       const result = await deleteExpense(id);
       if (result.success) {
-        toast.success('Éxito', {
-          description: result.message,
-        });
-        // Recargar todos los gastos para actualizar estadísticas
+        toast.success('Éxito', { description: result.message });
         await loadAllExpenses();
       } else {
-        toast.error('Error', {
-          description: result.message,
-        });
+        toast.error('Error', { description: result.message });
       }
     } catch (error) {
-      toast.error('Error', {
-        description: 'Error inesperado al eliminar',
-      });
+      toast.error('Error', { description: 'Error inesperado al eliminar' });
     }
-  };;
+  };
 
   const isFilterActive = transactionTypeFilter !== undefined;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
-      <Toaster position="top-right" richColors />
-
       <div className="max-w-6xl mx-auto space-y-6">
         <nav className="bg-white rounded-lg shadow-sm p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -206,8 +180,8 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
               Volver al Home
             </Button>
             <Button
-              onClick={() => {
-                logout();
+              onClick={async () => {
+                await logout();
                 onNavigate('login');
               }}
               variant="outline"
@@ -226,9 +200,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
               Gestión Financiera Personal
             </h2>
           </div>
-          <p className="text-slate-600">
-            Controla tus ingresos y gastos
-          </p>
+          <p className="text-slate-600">Controla tus ingresos y gastos</p>
         </div>
 
         <Dashboard budgetLimit={budgetLimit} data={dashboardData} />
@@ -264,9 +236,7 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
               <CardHeader>
                 <CardTitle>Historial de Transacciones</CardTitle>
                 <CardDescription>
-                  {isLoadingExpenses
-                    ? 'Cargando...'
-                    : `${expenses.length} transacciones`}
+                  {isLoadingExpenses ? 'Cargando...' : `${expenses.length} transacciones`}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -276,22 +246,23 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                     <p className="text-red-600 text-sm">{error}</p>
                   </div>
                 )}
-                
+
                 {isLoadingExpenses ? (
                   <div className="text-center py-8">
                     <p className="text-slate-500">Cargando transacciones...</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {/* EC-01: Filtro por tipo de transacción (backend) */}
                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                       <h3 className="font-semibold mb-4">Filtros</h3>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                         <div className="space-y-2">
                           <Label>Tipo de Transacción</Label>
-                          <Select 
-                            value={transactionTypeFilter || 'ALL'} 
-                            onValueChange={(val: string) => setTransactionTypeFilter(val === 'ALL' ? undefined : val as TransactionType)}
+                          <Select
+                            value={transactionTypeFilter || 'ALL'}
+                            onValueChange={(val: string) =>
+                              setTransactionTypeFilter(val === 'ALL' ? undefined : val as TransactionType)
+                            }
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Todos" />
@@ -306,15 +277,23 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
 
                         <div className="space-y-2">
                           <Label>Fecha Inicio</Label>
-                          <Input type="date" value={startDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)} />
+                          <Input
+                            type="date"
+                            value={startDate}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setStartDate(e.target.value)}
+                          />
                         </div>
 
                         <div className="space-y-2">
                           <Label>Fecha Fin</Label>
-                          <Input type="date" value={endDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)} />
+                          <Input
+                            type="date"
+                            value={endDate}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEndDate(e.target.value)}
+                          />
                         </div>
                       </div>
-                      {/* EC-02: Botón para limpiar filtro */}
+
                       {(isFilterActive || startDate || endDate) && (
                         <Button
                           onClick={() => {
@@ -333,16 +312,13 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
                     {expenses.length === 0 ? (
                       <div className="text-center py-8">
                         <p className="text-slate-500">
-                          {transactionTypeFilter 
+                          {transactionTypeFilter
                             ? `No hay ${transactionTypeFilter === TransactionType.GASTO ? 'gastos' : 'ingresos'} registrados`
                             : 'No hay transacciones registradas'}
                         </p>
                       </div>
                     ) : (
-                      <ExpenseList
-                        expenses={expenses}
-                        onDelete={handleDeleteExpense}
-                      />
+                      <ExpenseList expenses={expenses} onDelete={handleDeleteExpense} />
                     )}
                   </div>
                 )}
@@ -354,5 +330,4 @@ export const ExpensesPage: React.FC<ExpensesPageProps> = ({ onNavigate }: Expens
     </div>
   );
 };
-
 export default ExpensesPage;

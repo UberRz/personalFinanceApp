@@ -27,8 +27,13 @@ public class AuthController {
                     .body(new ApiResponse("El email no tiene un formato válido", false));
         }
         try {
-            String token = authenticateUserUseCase.execute(dto.getEmail(), dto.getPassword());
-            AuthResponseDTO response = new AuthResponseDTO(token, dto.getEmail());
+            AuthenticateUserUseCase.AuthResult result = authenticateUserUseCase.execute(dto.getEmail(), dto.getPassword());
+            AuthResponseDTO response = new AuthResponseDTO(
+                result.token(),
+                result.user().getId(),
+                result.user().getEmail(),
+                result.user().getName()
+            );
             return ResponseEntity.ok(new ApiResponse("Inicio de sesión exitoso", true, response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest()
