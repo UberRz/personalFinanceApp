@@ -5,6 +5,26 @@ export enum TransactionType {
   INGRESO = 'INGRESO'
 }
 
+export type ExpenseCategory =
+  | 'ALIMENTACION'
+  | 'TRANSPORTE'
+  | 'VIVIENDA'
+  | 'ENTRETENIMIENTO'
+  | 'SALUD'
+  | 'EDUCACION';
+
+export type IncomeCategory = 'INGRESO_FIJO' | 'INGRESO_EXTRA';
+
+export type Category = ExpenseCategory | IncomeCategory;
+
+export function getAvailableCategories(type: TransactionType): Category[] {
+  if (type === TransactionType.INGRESO) {
+    return ['INGRESO_FIJO', 'INGRESO_EXTRA'];
+  }
+
+  return ['ALIMENTACION', 'TRANSPORTE', 'VIVIENDA', 'ENTRETENIMIENTO', 'SALUD', 'EDUCACION'];
+}
+
 export interface Expense {
   id: number;
   description: string;
@@ -56,11 +76,19 @@ export function getCategoryLabel(category: string): string {
     ENTRETENIMIENTO: 'Entretenimiento',
     SALUD: 'Salud',
     EDUCACION: 'Educación',
-    SALARIO: 'Salario',
-    INVERSION: 'Inversión',
-    OTROS: 'Otros'
+    INGRESO_FIJO: 'Ingreso fijo',
+    INGRESO_EXTRA: 'Ingreso extra'
   };
   return labels[category.toUpperCase()] || category;
+}
+
+export function getTransactionTypeLabel(type: TransactionType): string {
+  const labels: Record<TransactionType, string> = {
+    [TransactionType.GASTO]: 'Gasto',
+    [TransactionType.INGRESO]: 'Ingreso',
+  };
+
+  return labels[type] || type;
 }
 
 // --- PETICIONES HTTP USANDO APICALL (INCLUYEN TOKEN AUTOMÁTICAMENTE) ---
@@ -100,10 +128,66 @@ export async function deleteExpense(id: number): Promise<{ message: string; succ
 
 export async function getDashboardSummary(userId: number): Promise<DashboardSummary | null> {
   try {
-    // Ajusta el endpoint según cómo lo tengas mapeado en tu controlador de Spring Boot
-    return await apiCall<DashboardSummary>(`/transactions/user/${userId}/summary`, 'GET');
+    // El backend expone el resumen por /dashboard/{userId}
+    return await apiCall<DashboardSummary>(`/dashboard/${userId}`, 'GET');
   } catch (error) {
     console.error('Error al obtener el resumen del dashboard:', error);
     return null;
+  }
+}
+
+export interface BudgetStatusDTO {
+  budget: number;
+  totalIncome: number;
+  spent: number;
+  remaining: number;
+  percentageUsed: number;
+  year: number;
+  month: number;
+}
+
+export interface BudgetDTO {
+  budget: number;
+  year: number;
+  month: number;
+}
+
+interface BudgetResponse {
+  message: string;
+  success: boolean;
+  data?: BudgetDTO;
+}
+
+interface BudgetRequestDTO {
+  userId: number;
+  limit: number;
+}
+
+export async function getBudgetStatus(userId: number): Promise<BudgetStatusDTO | null> {
+  try {
+    return await apiCall<BudgetStatusDTO>(`/transactions/budget-status/${userId}`, 'GET');
+  } catch (error) {
+    console.error('Error al obtener el estado del presupuesto:', error);
+    return null;
+  }
+}
+
+export async function updateBudgetLimit(userId: number, limit: number): Promise<{ success: boolean; message: string; data?: BudgetDTO }> {
+  try {
+    const response = await apiCall<BudgetResponse>('/transactions/budget', 'POST', {
+      userId,
+      limit,
+    } as BudgetRequestDTO);
+
+    return {
+      success: response.success,
+      message: response.message,
+      data: response.data,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error al actualizar el presupuesto',
+    };
   }
 }
