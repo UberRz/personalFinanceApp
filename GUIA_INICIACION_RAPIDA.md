@@ -1,8 +1,8 @@
 # 🚀 Guía Rápida de Iniciación - AppFinanzas
 
-**Última actualización:** 2026-05-10 (Sprint 2)
+**Última actualización:** 2026-06-03
 
-> Esta guía te permitirá ejecutar la aplicación **AppFinanzas** con gestión de transacciones, autenticación de usuarios e integración con PostgreSQL en la nube.
+> Esta guía te permitirá ejecutar la aplicación **AppFinanzas** con autenticación JWT, registro de ingresos y gastos, presupuesto mensual, dashboard financiero e integración con PostgreSQL en la nube.
 
 ---
 
@@ -37,8 +37,8 @@ Antes de comenzar, asegúrate de tener instalado lo siguiente:
 ### Paso 1: Clonar el Repositorio
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
-cd ProyectoFabricaEscuela
+git clone https://github.com/UberRz/personalFinanceApp.git
+cd personalFinanceApp
 ```
 
 ### Paso 2: Iniciar los Servicios
@@ -51,8 +51,8 @@ Este comando:
 
 - ✅ Descarga las imágenes necesarias
 - ✅ Construye los contenedores
-- ✅ Inicia Frontend, Backend y PostgreSQL
-- ✅ Configura la red automáticamente
+- ✅ Inicia Frontend y Backend con la configuración definida en `docker-compose.yml`
+- ✅ Conecta el backend con la base de datos PostgreSQL en la nube
 
 ### Paso 3: Esperar a que los Servicios Estén Listos
 
@@ -60,7 +60,7 @@ Este comando:
 # Verificar estado
 docker-compose ps
 
-# Esperar ~30 segundos para que inicie completamente
+# Esperar ~30 segundos para que el backend termine de levantar
 ```
 
 ### Paso 4: Acceder a la Aplicación
@@ -70,6 +70,8 @@ Abre tu navegador con:
 ```
 http://localhost:3000
 ```
+
+Desde ahí podrás ir a login, registro, dashboard, historial, presupuesto y cierre de sesión.
 
 ---
 
@@ -86,6 +88,12 @@ cd backend
 mvn clean package
 
 # Ejecutar (con puerto 8081)
+mvn spring-boot:run
+```
+
+O también puedes ejecutar el JAR generado:
+
+```bash
 java -jar target/personalfinancialmanagement-0.0.1-SNAPSHOT.jar --server.port=8081
 ```
 
@@ -110,9 +118,8 @@ El frontend estará disponible en: `http://localhost:3000`
 
 ### Base de Datos (PostgreSQL en la nube)
 
-**⚠️ Sprint 2:** La base de datos se ejecuta en **Render.com** (nube), no localmente.
-
-No necesitas instalar PostgreSQL localmente. La aplicación se conecta automáticamente a:
+**⚠️ Configuración actual:** la base de datos se ejecuta en **Render.com** (nube).
+No necesitas instalar PostgreSQL localmente para la configuración normal del proyecto. La aplicación se conecta automáticamente a:
 
 ```
 Servidor: dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com
@@ -121,7 +128,7 @@ Usuario: appuser
 Database: appfinanzas_db_q1li
 ```
 
-**Nota:** Las credenciales están configuradas en `docker-compose.yml`
+**Nota:** las credenciales están configuradas en `docker-compose.yml` y en `backend/src/main/resources/application.properties`.
 
 ---
 
@@ -133,90 +140,108 @@ Database: appfinanzas_db_q1li
 # Ver todos los contenedores corriendo
 docker ps
 
-# Debe mostrar 3 contenedores:
+# Debe mostrar 2 contenedores principales:
 # - appfinanzas_frontend (puerto 3000)
-# - appfinanzas_backend (puerto 8081) ✨ Sprint 2: puerto actualizado
-# - appfinanzas_postgres (puerto 5432 - en la nube)
+# - appfinanzas_backend (puerto 8081)
 ```
 
 ### Prueba de Conectividad
 
 ```bash
-# Verificar que el backend responde (ping)
-curl http://localhost:8081/transactions/user/1
-
-# Respuesta esperada (requiere userId válido):
-# [] (array vacío) o datos de transacciones
+# Verificar que el backend responde
+curl http://localhost:8081/actuator/health
 
 # Verificar registro de usuario
 curl -X POST http://localhost:8081/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"test@test.com","password":"Test1234!","name":"Test User"}'
 
-# Respuesta esperada:
-# {"message": "Usuario registrado exitosamente", "success": true}
+# Verificar login y recibir token JWT
+curl -X POST http://localhost:8081/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@test.com","password":"Test1234!"}'
+
+# Verificar presupuesto mensual
+curl http://localhost:8081/transactions/budget/1
+
+# Verificar estado del presupuesto
+curl http://localhost:8081/transactions/budget-status/1
+
+# Verificar dashboard
+curl http://localhost:8081/dashboard/1
 ```
 
 ### Acceso a la Aplicación
 
-| Componente    | URL                   | Estado                    |
-| ------------- | --------------------- | ------------------------- |
-| Frontend      | http://localhost:3000 | ✅ Debería cargar         |
-| Backend API   | http://localhost:8081 | ✅ Debería responder JSON |
-| Base de Datos | Render.com:5432       | ✅ En la nube (no local) |
+| Componente    | URL                   | Estado                                  |
+| ------------- | --------------------- | ----------------------------------------|
+| Frontend      | http://localhost:3000 | ✅ Debería cargar                       |
+| Backend API   | http://localhost:8081 | ✅ Debería responder JSON / health      |
+| Base de Datos | Render.com:5432       | ✅ En la nube (no local)                |
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-ProyectoFabricaEscuela/
-├── frontend/                          # React + TypeScript
+personalFinanceApp/
+├── frontend/                               # React + TypeScript + Vite
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── pages/               # Páginas React
+│   │   │   ├── pages/                      # Páginas principales
 │   │   │   │   ├── Home.tsx
-│   │   │   │   ├── LoginPage.tsx      # ✨ Sprint 2
-│   │   │   │   ├── RegisterPage.tsx   # ✨ Sprint 2
-│   │   │   │   └── ExpensesPage.tsx
-│   │   │   ├── components/          # Componentes reutilizables
-│   │   │   │   ├── ExpenseForm.tsx    # ✨ Mejorado
-│   │   │   │   ├── ExpenseList.tsx    # ✨ Mejorado
-│   │   │   │   └── BudgetSummary.tsx  # ✨ Sprint 2
-│   │   │   ├── services/            # Servicios API
-│   │   │   │   ├── authService.ts     # ✨ Sprint 2
-│   │   │   │   └── expenseService.ts  # ✨ Mejorado
+│   │   │   │   ├── LoginPage.tsx
+│   │   │   │   ├── RegisterPage.tsx
+│   │   │   │   └── ExpensesPage.tsx       # Dashboard, historial, presupuesto y logout
+│   │   │   ├── components/
+│   │   │   │   ├── BudgetSummary.tsx       # Estado y edición del presupuesto
+│   │   │   │   ├── Dashboard.tsx           # Resumen financiero y categorías
+│   │   │   │   ├── ExpenseForm.tsx
+│   │   │   │   ├── ExpenseList.tsx
+│   │   │   │   └── ui/                     # Librería visual reutilizable
+│   │   │   ├── services/
+│   │   │   │   ├── authService.ts          # Registro, login, logout y token JWT
+│   │   │   │   └── expenseService.ts       # Transacciones, presupuesto y dashboard
 │   │   │   └── App.tsx
 │   │   └── main.tsx
 │   ├── package.json
 │   ├── vite.config.ts
 │   └── Dockerfile
 │
-├── backend/                           # Spring Boot Java (Arquitectura Hexagonal)
-│   ├── src/main/java/org/codefactory/
-│   │   └── personalfinancialmanagement/
-│   │       ├── application/         # Casos de uso
-│   │       │   ├── AuthenticateUserUseCase      # ✨ Sprint 2
-│   │       │   ├── RegisterUserUseCase          # ✨ Sprint 2
-│   │       │   ├── RegisterTransactionUseCase   # ✨ Sprint 2
-│   │       │   ├── GetFilteredTransactionsUseCase # ✨ Sprint 2
-│   │       │   └── ...
-│   │       ├── domain/              # Modelos de dominio
-│   │       │   ├── model/User              # ✨ Sprint 2
-│   │       │   ├── model/Transaction       # ✨ Sprint 2
-│   │       │   ├── model/Expense
-│   │       │   ├── model/Income            # ✨ Sprint 2
-│   │       │   └── ...
-│   │       ├── infrastructure/      # Controladores, DTOs
-│   │       │   ├── AuthController         # ✨ Sprint 2
-│   │       │   ├── UserRegisterController # ✨ Sprint 2
-│   │       │   └── TransactionController  # ✨ Sprint 2
-│   │       └── ...
+├── backend/                                # Spring Boot 3.5 + Java 17
+│   ├── src/main/java/org/codefactory/team07/personalfinancialmanagement/
+│   │   ├── application/                    # Casos de uso y servicios
+│   │   │   ├── service/JwtService.java
+│   │   │   └── usecase/
+│   │   │       ├── AuthenticateUserUseCase.java
+│   │   │       ├── RegisterUserUseCase.java
+│   │   │       ├── RegisterTransactionUseCase.java
+│   │   │       ├── GetTransactionsUseCase.java
+│   │   │       ├── GetFilteredTransactionsUseCase.java
+│   │   │       ├── DeleteTransactionUseCase.java
+│   │   │       ├── DefineBudgetUseCase.java
+│   │   │       ├── GetCurrentBudgetUseCase.java
+│   │   │       ├── GetBudgetStatusUseCase.java
+│   │   │       └── GetDashboardSummaryUseCase.java
+│   │   ├── domain/                         # Modelos, enums, estrategias y puertos
+│   │   │   ├── model/
+│   │   │   ├── port/out/
+│   │   │   └── strategy/
+│   │   ├── infrastructure/                 # Adaptadores REST y persistencia JPA
+│   │   │   ├── adapter/in/web/
+│   │   │   │   ├── AuthController.java
+│   │   │   │   ├── UserRegisterController.java
+│   │   │   │   ├── TransactionController.java
+│   │   │   │   ├── BudgetController.java
+│   │   │   │   └── DashboardController.java
+│   │   │   └── adapter/out/persistance/
+│   │   └── config/
 │   ├── pom.xml
 │   └── Dockerfile
 │
-├── docker-compose.yml                # Orquestación de servicios (con BD en nube)
-└── README.md
+├── docker-compose.yml                       # Orquestación de frontend + backend
+└── docs/
+    └── backend/README_BACKEND.md            # Documentación técnica del backend
 ```
 
 ---
@@ -245,7 +270,7 @@ docker-compose restart
 docker-compose build --no-cache
 docker-compose up -d
 
-# Limpiar volúmenes (⚠️ elimina datos)
+# Limpiar volúmenes (⚠️ elimina datos locales si existen)
 docker-compose down -v
 ```
 
@@ -263,7 +288,7 @@ npm run dev
 # Compilar para producción
 npm run build
 
-# Ejecutar pruebas
+# Ejecutar pruebas si están definidas
 npm test
 ```
 
@@ -276,7 +301,7 @@ cd backend
 mvn clean package
 
 # Ejecutar
-java -jar target/personalfinancialmanagement-0.0.1-SNAPSHOT.jar
+mvn spring-boot:run
 
 # Ejecutar pruebas
 mvn test
@@ -288,17 +313,18 @@ mvn --version
 ### Base de Datos
 
 ```bash
-# ✨ Sprint 2: Conectar a PostgreSQL en la nube (Render.com)
+# Conectar a PostgreSQL en la nube (Render.com)
 psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
      -U appuser \
      -d appfinanzas_db_q1li
 
 # Dentro de psql:
-\dt                               # Ver todas las tablas
-SELECT * FROM users;              # Ver usuarios registrados
-SELECT * FROM transactions;       # Ver todas las transacciones
+\dt                                       # Ver todas las tablas
+SELECT * FROM users;                      # Ver usuarios registrados
+SELECT * FROM transactions;               # Ver todas las transacciones
+SELECT * FROM monthly_budgets;            # Ver presupuestos mensuales
 SELECT * FROM transactions WHERE user_id = 1;  # Ver transacciones de usuario
-\q                                # Salir
+\q                                        # Salir
 ```
 
 ---
@@ -308,17 +334,17 @@ SELECT * FROM transactions WHERE user_id = 1;  # Ver transacciones de usuario
 ### Docker (docker-compose.yml)
 
 ```yaml
-# ✨ Sprint 2: Base de datos en la nube (Render.com)
 SPRING_DATASOURCE_URL: jdbc:postgresql://dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com:5432/appfinanzas_db_q1li?sslmode=require
 SPRING_DATASOURCE_USERNAME: appuser
 SPRING_DATASOURCE_PASSWORD: YeyiNt6qwMDRzSV3E1Cc1WcOwU65cqRU
 SERVER_PORT: 8081
+VITE_API_URL: http://localhost:8081
 ```
 
 ### Frontend (opcional .env)
 
 ```bash
-# ✨ Sprint 2: Actualizar puerto del backend
+# URL del backend para desarrollo local
 VITE_API_URL=http://localhost:8081
 ```
 
@@ -336,13 +362,13 @@ VITE_API_URL=http://localhost:8081
 # Verificar qué está usando el puerto
 # Windows:
 netstat -ano | findstr :3000
-netstat -ano | findstr :8081  # ✨ Sprint 2: Puerto del backend cambió
+netstat -ano | findstr :8081
 
 # Mac/Linux:
 lsof -i :3000
 lsof -i :8081
 
-# Cambiar puerto en docker-compose.yml
+# Cambiar puerto en docker-compose.yml si hace falta
 # Cambiar "3000:3000" por "3001:3000"
 # O cambiar "8081:8081" por "8082:8081" (backend)
 ```
@@ -376,13 +402,35 @@ docker-compose up -d
 
 ### Problema: Base de datos no se conecta
 
-**Error:** `Connection refused` al backend
+**Error:** el backend no responde o devuelve errores de conexión
 
 **Solución:**
 
-1. Verificar que PostgreSQL está corriendo: `docker ps`
-2. Esperar 30 segundos a que la BD inicialice
-3. Reiniciar: `docker-compose restart appfinanzas_postgres`
+1. Verificar que la URL de PostgreSQL siga siendo válida
+2. Revisar que `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD` coincidan con la configuración real
+3. Confirmar que el backend está escuchando en `8081`
+
+### Problema: Login, logout o dashboard no funcionan
+
+**Error:** autenticación fallida o datos vacíos en la pantalla principal
+
+**Solución:**
+
+1. Verificar que el usuario esté registrado correctamente
+2. Confirmar que el token JWT se guardó en `localStorage`
+3. Revisar que el backend esté respondiendo en `http://localhost:8081/actuator/health`
+4. Limpiar sesión y volver a iniciar con un usuario válido
+
+### Problema: Presupuesto no se actualiza
+
+**Error:** el monto cambia en pantalla pero no persiste
+
+**Solución:**
+
+1. Usar un valor mayor a `0`
+2. Verificar que el usuario esté autenticado
+3. Revisar la respuesta de `POST /transactions/budget`
+4. Consultar `GET /transactions/budget/{userId}` y `GET /transactions/budget-status/{userId}`
 
 ### Problema: Frontend no carga
 
@@ -394,29 +442,11 @@ docker-compose up -d
 # Ver logs del frontend
 docker-compose logs frontend
 
-# Verificar que npm install completó exitosamente
-docker-compose logs | grep "npm install"
-
-# Reconstruir frontend
+# Verificar instalación de dependencias
 docker-compose build --no-cache frontend
+
+# Reiniciar frontend
 docker-compose up -d
-```
-
-### Problema: node_modules no instalado
-
-**Error:** `Cannot find module` en el frontend
-
-**Solución:**
-
-```bash
-# Local (sin Docker):
-cd frontend
-npm install
-
-# Docker:
-# El Dockerfile ejecutará npm install automáticamente
-# Si falla, reconstruir:
-docker-compose build --no-cache frontend
 ```
 
 ---
@@ -426,8 +456,8 @@ docker-compose build --no-cache frontend
 | Servicio   | Puerto | Protocolo | Acceso                    |
 | ---------- | ------ | --------- | ------------------------- |
 | Frontend   | 3000   | HTTP      | http://localhost:3000     |
-| Backend    | 8081   | HTTP      | http://localhost:8081 ✨  |
-| PostgreSQL | 5432   | TCP       | Render.com (nube) ✨      |
+| Backend    | 8081   | HTTP      | http://localhost:8081     |
+| PostgreSQL | 5432   | TCP       | Render.com (nube)         |
 
 ---
 
@@ -439,14 +469,17 @@ Después de iniciar, verifica lo siguiente:
 - [ ] Docker Compose está instalado: `docker-compose --version`
 - [ ] Contenedores están corriendo: `docker ps`
 - [ ] Frontend carga: http://localhost:3000
-- [ ] Backend responde: `curl http://localhost:8081/transactions/user/1`
-- [ ] **✨ Sprint 2:** Puedes registrar un usuario exitosamente
-- [ ] **✨ Sprint 2:** Puedes hacer login con el usuario creado
-- [ ] **✨ Sprint 2:** Puedes crear un gasto (GASTO) sin errores
-- [ ] **✨ Sprint 2:** Puedes crear un ingreso (INGRESO) sin errores
-- [ ] **✨ Sprint 2:** Puedes filtrar por tipo de transacción
-- [ ] **✨ Sprint 2:** Puedes filtrar por rango de fechas
-- [ ] **✨ Sprint 2:** Puedes ver los totales de ingresos y gastos
+- [ ] Backend responde: `curl http://localhost:8081/actuator/health`
+- [ ] Puedes registrar un usuario exitosamente
+- [ ] Puedes hacer login con el usuario creado
+- [ ] Puedes cerrar sesión correctamente
+- [ ] Puedes crear un gasto (`GASTO`) sin errores
+- [ ] Puedes crear un ingreso (`INGRESO`) sin errores
+- [ ] Puedes visualizar el dashboard financiero
+- [ ] Puedes crear o editar el presupuesto mensual
+- [ ] Puedes visualizar el estado del presupuesto mensual
+- [ ] Puedes filtrar por tipo de transacción
+- [ ] Puedes filtrar por rango de fechas
 - [ ] Puedes eliminar transacciones correctamente
 
 ---
@@ -481,13 +514,13 @@ docker-compose down
 ### Con Docker (Recomendado):
 
 1. `docker-compose up -d` - Inicia rápidamente
-2. Todos los servicios configurados automáticamente
-3. Datos persisten en volúmenes Docker
+2. Frontend y backend quedan disponibles con la configuración del proyecto
+3. La base de datos queda centralizada en PostgreSQL de Render
 
 ### Sin Docker:
 
 1. Instalar cada componente por separado
-2. Configurar conexiones manualmente
+2. Configurar `VITE_API_URL` y el backend manualmente
 3. Más control pero más complejo
 
 ---
@@ -503,9 +536,10 @@ docker-compose down
 
 ### Archivos Útiles en el Proyecto:
 
-- `README.md` - Información general
+- `README.md` - Información general del proyecto
 - `ESTADO_SISTEMA.md` - Estado actual del sistema
-- `ERRORES_RESUELTOS.md` - Problemas conocidos resueltos
+- `GUIA_PRUEBAS.md` - Casos y pasos de validación funcional
+- `docs/backend/README_BACKEND.md` - Documentación técnica del backend
 - `docker-compose.yml` - Configuración de servicios
 
 ---
@@ -515,35 +549,8 @@ docker-compose down
 Después de ejecutar correctamente:
 
 1. **Prueba la aplicación:**
-   - Registra algunos gastos
-   - Verifica que aparecen en la tabla
-   - Intenta eliminarlos
-
-2. **Revisa el código:**
-   - Explora `frontend/src/` (React)
-   - Explora `backend/src/` (Java/Spring Boot)
-
-3. **Personaliza:**
-   - Agregamore categorías en `Category.java`
-   - Modifica estilos en `frontend/tailwind.css`
-   - Ajusta límites de presupuesto
-
-4. **Desplega:**
-   - Sube a un servidor de producción
-   - Configura un dominio
-   - Usa HTTPS
-
----
-
-**¡La aplicación está lista para usar! 🎉**
-
-Si tienes problemas, revisa los logs con:
-
-```bash
-docker-compose logs
-```
-
----
-
-_Versión: 1.0 | Fecha: 2026-04-06_
-
+   - Registra un usuario
+   - Inicia sesión
+   - Crea ingresos y gastos
+   - Revisa el dashboard y el presupuesto
+   - Prueba cerrar sesión y volver a entrar

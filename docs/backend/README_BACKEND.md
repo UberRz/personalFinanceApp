@@ -195,8 +195,8 @@ mvn test
 | GET    | `/transactions/user/{userId}`    | Listar transacciones del usuario              |
 | GET    | `/transactions/history/{userId}` | Filtrar historial por tipo y fechas           |
 | DELETE | `/transactions/{id}`             | Eliminar transacción                          |
-| GET    | `/transactions/budget-status/{userId}` | Ver estado del presupuesto mensual     |
-| GET    | `/transactions/budget/{userId}`   | Consultar presupuesto mensual actual          |
+| GET    | `/transactions/budget-status/{userId}` | Ver estado del presupuesto mensual      |
+| GET    | `/transactions/budget/{userId}`   | Consultar presupuesto mensual actual         |
 | POST   | `/transactions/budget`           | Crear o actualizar presupuesto mensual        |
 | PUT    | `/transactions/budget`           | Crear o actualizar presupuesto mensual        |
 | GET    | `/dashboard/{userId}`            | Consultar resumen del dashboard de un usuario |
@@ -455,7 +455,7 @@ El backend responde con `ApiResponse` en registro, login, logout, creación y el
 
 - Backend: `8081`
 - Frontend: `3000`
-- La configuración actual del backend apunta a una base PostgreSQL externa, no a un servicio `db` local dentro de `docker-compose`.
+- La configuración actual del backend apunta a una DB PostgreSQL existente en Render
 
 ### Comandos útiles
 

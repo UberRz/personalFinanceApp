@@ -1,45 +1,55 @@
 # 🚀 Estado del Sistema AppFinanzas
 
-## ✅ Estado Actual - Sprint 2 - 2026-05-10
+## ✅ Estado Actual - 2026-06-03
 
-**Sistema Completamente Operativo - Gestión de Transacciones Implementada** ✅
+**Sistema Operativo - Gestión Financiera con Autenticación JWT, Presupuesto y Dashboard** ✅
 
-### Últimas Actualizaciones (Sprint 2):
+### Últimas Actualizaciones
 
-- ✅ **Cambio de Base de Datos**: PostgreSQL (Render.com) - Base de datos en la nube
-- ✅ **Creación de Cuentas**: Registro de usuarios con validaciones robustas
-- ✅ **Inicio de Sesión**: Autenticación segura con persistencia de sesión
-- ✅ **Ingresos y Gastos**: Registro de transacciones de dos tipos
-- ✅ **Filtros por Fecha**: Rango de fechas personalizable
-- ✅ **Filtros por Categoría**: Filtrado por tipo de transacción (Ingreso/Gasto)
-- ✅ **Sistema de Categorías**: Categorías específicas por tipo de transacción
-- ✅ **Gestión de Transacciones**: Crear, listar, filtrar y eliminar transacciones
-- ✅ **Resumen Presupuestario**: Dashboard con totales de ingresos y gastos
+- ✅ **Cambio de Base de Datos**: PostgreSQL en Render.com con persistencia en la nube.
+- ✅ **Creación de Cuentas**: Registro de usuarios con validaciones reales en frontend y backend.
+- ✅ **Inicio de Sesión**: Autenticación con JWT, almacenamiento en `localStorage` y retorno de token, id, email y nombre.
+- ✅ **Cerrar Sesión**: Invalida el token en backend y limpia la sesión en frontend.
+- ✅ **Ingresos y Gastos**: Registro de transacciones con categorías específicas por tipo.
+- ✅ **Filtros por Fecha**: Rango de fechas configurable en el historial.
+- ✅ **Filtros por Tipo**: Filtrado por `GASTO` e `INGRESO`.
+- ✅ **Sistema de Categorías**: Categorías separadas para gastos e ingresos.
+- ✅ **Gestión de Transacciones**: Crear, listar, filtrar y eliminar transacciones.
+- ✅ **Presupuesto Mensual**: Crear, editar y consultar el presupuesto del mes actual.
+- ✅ **Estado del Presupuesto**: Visualización de gasto, restante y porcentaje usado.
+- ✅ **Dashboard Financiero**: Resumen con ingresos, gastos, balance, categorías y movimientos recientes.
 
 ---
 
 ## ✅ Servicios Activos
 
-| Servicio       | Estado       | Puerto | URL                                                                              |
-| -------------- | ------------ | ------ | -------------------------------------------------------------------------------- |
-| **Frontend**   | ✅ Corriendo | 3000   | http://localhost:3000                                                            |
-| **Backend**    | ✅ Corriendo | 8081   | http://localhost:8081                                                            |
-| **PostgreSQL** | ✅ Healthy   | 5432   | postgresql://appuser:YeyiNt6qwMDRzSV3E1Cc1WcOwU65cqRU@dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com:5432/appfinanzas_db_q1li |
+| Servicio       | Estado       | Puerto | URL                                  |
+------------------------------------------------------------------------------- |
+| **Frontend**  | ✅ Corriendo | 3000   | http://localhost:3000                 |
+| *Backend**    | ✅ Corriendo | 8081   | http://localhost:8081                 |
+| *PostgreSQL** | ✅ Healthy   | 5YeyiNt6qwMDRzSV3E1Cc1WcOwU65cqRU   | postgresql://appuser:YeyiNt6qwMDRzSV3E1Cc1WcOwU65cqRU@dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com:5432/appfinanzas_db_q1li |
 
 ---
 
-## 🔐 Sistema de Autenticación y Transacciones
+## 🔐 Sistema de Autenticación, Presupuesto y Transacciones
 
 ### Endpoints Implementados
 
-| Método | Endpoint                      | Descripción                           | Requiere Auth | Parámetros                                      |
-| ------ | ----------------------------- | ------------------------------------- | ------------- | ----------------------------------------------- |
-| POST   | `/auth/register`              | Registrar nuevo usuario               | ❌            | email, password, name                           |
-| POST   | `/auth/login`                 | Iniciar sesión                        | ❌            | email, password                                 |
-| POST   | `/transactions`               | Registrar gasto o ingreso             | ✅            | description, amount, category, date, type, userId |
-| GET    | `/transactions/user/{userId}` | Obtener todas las transacciones       | ✅            | userId (path)                                   |
-| GET    | `/transactions/history/{userId}` | Obtener transacciones filtradas   | ✅            | userId (path), type, startDate, endDate         |
-| DELETE | `/transactions/{id}`          | Eliminar una transacción              | ✅            | id (path)                                       |
+| Método | Endpoint                               | Descripción                              | Requiere Auth | Parámetros |
+| ------ | -------------------------------------- | ---------------------------------------- | ------------- | ---------- |
+| POST   | `/auth/register`                      | Registrar nuevo usuario                  | ❌            | email, password, name |
+| POST   | `/auth/login`                         | Iniciar sesión y generar JWT             | ❌            | email, password |
+| POST   | `/auth/logout`                        | Invalidar token JWT                       | ✅ Token      | Authorization: Bearer <token> |
+| POST   | `/transactions`                       | Registrar gasto o ingreso                | ❌ / opcional | description, amount, category, date, type, userId |
+| GET    | `/transactions/user/{userId}`         | Obtener todas las transacciones del usuario | ❌ / opcional | userId (path) |
+| GET    | `/transactions/history/{userId}`      | Obtener transacciones filtradas          | ❌ / opcional | userId (path), type, startDate, endDate |
+| DELETE | `/transactions/{id}`                  | Eliminar una transacción                 | ❌ / opcional | id (path) |
+| GET    | `/transactions/budget-status/{userId}` | Obtener estado del presupuesto mensual    | ❌ / opcional | userId (path) |
+| GET    | `/transactions/budget/{userId}`       | Obtener presupuesto mensual actual        | ❌ / opcional | userId (path) |
+| POST   | `/transactions/budget`                | Crear presupuesto mensual                 | ❌ / opcional | userId, limit |
+| PUT    | `/transactions/budget`                | Editar presupuesto mensual                | ❌ / opcional | userId, limit |
+| GET    | `/dashboard/{userId}`                 | Obtener dashboard financiero              | ❌ / opcional | userId (path) |
+| GET    | `/dashboard/me`                       | Obtener dashboard del usuario autenticado | ✅ Header X-User-Id | X-User-Id |
 
 ### Categorías de Transacciones
 
@@ -60,18 +70,18 @@
 ```
 1. Usuario accede a http://localhost:3000
    ↓
-2. App verifica if isAuthenticated()
+2. App verifica isAuthenticated()
    ↓ NO
 3. Muestra Login Page / Register Page
-   ↓ Usuario registra o login
+   ↓ Usuario registra o inicia sesión
    ↓
 4. Backend valida credenciales
    ↓
-5. Devuelve datos del usuario (id, email, name)
+5. Devuelve token JWT + datos del usuario
    ↓
-6. Frontend guarda en localStorage
+6. Frontend guarda token y usuario en localStorage
    ↓ SÍ
-7. Muestra Home Page → ExpensesPage
+7. Muestra Home / ExpensesPage con dashboard, presupuesto e historial
 ```
 
 ### Requisitos de Contraseña
@@ -80,44 +90,62 @@
 ✅ Mayúsculas (A-Z)  
 ✅ Minúsculas (a-z)  
 ✅ Números (0-9)  
-✅ Símbolos (!@#$%^&\* etc.)
+✅ Símbolos especiales  
 
 **Ejemplo válido:** `Test1234!`
 
 ---
 
-## 📊 Funcionalidades Implementadas - Sprint 2
+## 📊 Funcionalidades Implementadas
 
-### 1. Sistema de Registro
-- ✅ Validación de email (formato correcto)
-- ✅ Validación de contraseña (requisitos robustos)
-- ✅ Prevención de duplicados (email único)
-- ✅ Mensajes de error descriptivos
-- ✅ Redirección automática a Login post-registro
+### 1. Sistema de Registro y Sesión
+- ✅ Validación de email con formato correcto.
+- ✅ Validación de contraseña con reglas robustas.
+- ✅ Prevención de duplicados por email.
+- ✅ Mensajes de error descriptivos.
+- ✅ Login con JWT.
+- ✅ Logout funcional con invalidación del token.
+- ✅ Persistencia de sesión en `localStorage`.
 
 ### 2. Gestión de Transacciones
-- ✅ **Crear Transacciones**: Gastos e ingresos con categorías específicas
-- ✅ **Listar Transacciones**: Vista de todas las transacciones del usuario
-- ✅ **Filtros Dinámicos**: 
-  - Por tipo (Ingreso/Gasto)
-  - Por rango de fechas (startDate - endDate)
-  - Combinación de múltiples filtros
-- ✅ **Eliminar Transacciones**: Borrado lógico de registros
+- ✅ **Crear Transacciones**: gastos e ingresos con categorías específicas.
+- ✅ **Listar Transacciones**: vista de transacciones del usuario.
+- ✅ **Filtrado Dinámico**:
+  - Por tipo (`GASTO` / `INGRESO`).
+  - Por rango de fechas (`startDate` / `endDate`).
+  - Combinación de filtros.
+- ✅ **Eliminar Transacciones**: borrado de registros.
 - ✅ **Resumen Financiero**:
-  - Total de ingresos
-  - Total de gastos
-  - Balance neto
+  - Total de ingresos.
+  - Total de gastos.
+  - Balance neto.
 
-### 3. Interfaz de Usuario
+### 3. Gestión de Presupuesto
+- ✅ **Crear presupuesto mensual** para el mes actual.
+- ✅ **Editar presupuesto mensual** existente.
+- ✅ **Visualizar estado del presupuesto**.
+- ✅ **Ver presupuesto restante**.
+- ✅ **Ver porcentaje usado**.
+
+### 4. Dashboard Financiero
+- ✅ **Dashboard resumido** por usuario.
+- ✅ **Movimientos recientes**.
+- ✅ **Categorías de gasto e ingreso**.
+- ✅ **Categoría de gasto principal**.
+- ✅ **Categoría de ingreso principal**.
+- ✅ **Ticket promedio**.
+
+### 5. Interfaz de Usuario
 - ✅ **Componentes Principales**:
-  - LoginPage - Formulario de acceso
-  - RegisterPage - Formulario de registro
-  - Home - Dashboard inicial
-  - ExpensesPage - Gestión de transacciones
-- ✅ **ExpenseForm**: Formulario para crear transacciones
-- ✅ **ExpenseList**: Tabla de transacciones filtradas
-- ✅ **BudgetSummary**: Resumen visual de presupuesto
-- ✅ **Filtros**: Interfaz para aplicar filtros por fecha y tipo
+  - LoginPage - Formulario de acceso.
+  - RegisterPage - Formulario de registro.
+  - Home - Pantalla principal con estado del backend.
+  - ExpensesPage - Gestión de transacciones, presupuesto y dashboard.
+- ✅ **ExpenseForm**: formulario para crear transacciones.
+- ✅ **ExpenseList**: tabla de transacciones filtradas.
+- ✅ **BudgetSummary**: resumen y edición del presupuesto.
+- ✅ **Dashboard**: resumen financiero visual.
+- ✅ **Filtros**: interfaz para aplicar filtros por fecha y tipo.
 
 ---
 
@@ -125,40 +153,45 @@
 
 ### Backend (Spring Boot)
 
-- ✅ Spring Boot 3.5.13 iniciado
-- ✅ Tomcat escuchando puerto 8081
-- ✅ JPA con Hibernate activo
-- ✅ HikariCP pool de conexiones activo
-- ✅ Arquitectura hexagonal implementada
+- ✅ Spring Boot 3.5.13 iniciado.
+- ✅ Tomcat escuchando puerto 8081.
+- ✅ JPA con Hibernate activo.
+- ✅ HikariCP pool de conexiones activo.
+- ✅ Arquitectura hexagonal implementada.
+- ✅ JWT implementado para login y logout.
 - ✅ Use Cases (Casos de Uso) implementados:
-  - `AuthenticateUserUseCase` - Login
-  - `RegisterUserUseCase` - Registro
-  - `RegisterTransactionUseCase` - Crear transacción
-  - `GetTransactionsUseCase` - Obtener transacciones
-  - `GetFilteredTransactionsUseCase` - Filtrar transacciones
-  - `DeleteTransactionUseCase` - Eliminar transacción
+  - `AuthenticateUserUseCase` - Login.
+  - `RegisterUserUseCase` - Registro.
+  - `RegisterTransactionUseCase` - Crear transacción.
+  - `GetTransactionsUseCase` - Obtener transacciones.
+  - `GetFilteredTransactionsUseCase` - Filtrar transacciones.
+  - `DeleteTransactionUseCase` - Eliminar transacción.
+  - `DefineBudgetUseCase` - Crear/editar presupuesto.
+  - `GetCurrentBudgetUseCase` - Obtener presupuesto actual.
+  - `GetBudgetStatusUseCase` - Obtener estado del presupuesto.
+  - `GetDashboardSummaryUseCase` - Obtener dashboard.
 
 ### Base de Datos
 
-- ✅ PostgreSQL 15 en Render.com (nube)
-- ✅ Base de datos `appfinanzas_db_q1li` disponible
-- ✅ Tablas:
-  - `users` - Usuarios registrados
-  - `transactions` - Gastos e ingresos
-  - `expenses` - Transacciones de gasto (heredada)
-- ✅ Datos persistentes en la nube
-- ✅ Backups automáticos en Render.com
+- ✅ PostgreSQL 15 en Render.com (nube).
+- ✅ Base de datos `appfinanzas_db_q1li` disponible.
+- ✅ Tablas activas:
+  - `users` - Usuarios registrados.
+  - `transactions` - Gastos e ingresos.
+  - `monthly_budgets` - Presupuestos mensuales.
+- ✅ Datos persistentes en la nube.
+- ✅ SSL/TLS habilitado.
 
 ### Frontend
 
-- ✅ React 18.3 + TypeScript 5.5 corriendo
-- ✅ Vite dev server escuchando puerto 3000
-- ✅ Componentes compilados y funcionales
+- ✅ React 18.3 + TypeScript 5.5 corriendo.
+- ✅ Vite dev server escuchando puerto 3000.
+- ✅ Componentes compilados y funcionales.
 - ✅ Servicios:
-  - `authService` - Gestión de autenticación
-  - `expenseService` - Gestión de transacciones
-- ✅ Conexión con backend (puerto 8081) establecida
-- ✅ Validaciones en cliente y servidor
+  - `authService` - Registro, login, logout y usuario autenticado.
+  - `expenseService` - Transacciones, dashboard y presupuesto.
+- ✅ Conexión con backend (puerto 8081) establecida.
+- ✅ Validaciones en cliente y servidor.
 
 ---
 
@@ -168,7 +201,7 @@
 Frontend (localhost:3000)
     ↓ HTTP requests (CORS habilitado)
 Backend (localhost:8081)
-    ↓ JDBC + SSL (sslmode=require)
+    ↓ JWT / Authorization + consultas REST
 PostgreSQL en la nube (Render.com:5432)
 ```
 
@@ -189,7 +222,8 @@ curl -X POST http://localhost:8081/auth/register \
 ```json
 {
   "message": "Usuario registrado exitosamente",
-  "success": true
+  "success": true,
+  "data": null
 }
 ```
 
@@ -209,6 +243,7 @@ curl -X POST http://localhost:8081/auth/login \
   "message": "Inicio de sesión exitoso",
   "success": true,
   "data": {
+    "token": "eyJhbGciOiJIUzI1NiJ9...",
     "id": 1,
     "email": "usuario@test.com",
     "name": "Usuario Test"
@@ -216,7 +251,13 @@ curl -X POST http://localhost:8081/auth/login \
 }
 ```
 
-#### 3. Registrar Gasto
+#### 3. Cerrar Sesión
+```bash
+curl -X POST http://localhost:8081/auth/logout \
+  -H "Authorization: Bearer <TOKEN_REAL>"
+```
+
+#### 4. Registrar Gasto
 ```bash
 curl -X POST http://localhost:8081/transactions \
   -H "Content-Type: application/json" \
@@ -224,13 +265,13 @@ curl -X POST http://localhost:8081/transactions \
     "description": "Almuerzo",
     "amount": 25.50,
     "category": "ALIMENTACION",
-    "date": "2026-05-10",
+    "date": "2026-06-03",
     "type": "GASTO",
     "userId": 1
   }'
 ```
 
-#### 4. Registrar Ingreso
+#### 5. Registrar Ingreso
 ```bash
 curl -X POST http://localhost:8081/transactions \
   -H "Content-Type: application/json" \
@@ -238,38 +279,43 @@ curl -X POST http://localhost:8081/transactions \
     "description": "Salario mensual",
     "amount": 2500.00,
     "category": "INGRESO_FIJO",
-    "date": "2026-05-01",
+    "date": "2026-06-01",
     "type": "INGRESO",
     "userId": 1
   }'
 ```
 
-#### 5. Obtener Todas las Transacciones
+#### 6. Obtener Todas las Transacciones
 ```bash
 curl http://localhost:8081/transactions/user/1
 ```
 
-#### 6. Obtener Transacciones Filtradas por Fecha
+#### 7. Obtener Transacciones Filtradas por Fecha
 ```bash
-curl "http://localhost:8081/transactions/history/1?startDate=2026-05-01&endDate=2026-05-31"
+curl "http://localhost:8081/transactions/history/1?startDate=2026-06-01&endDate=2026-06-30"
 ```
 
-#### 7. Obtener Solo Gastos
+#### 8. Obtener Solo Gastos
 ```bash
 curl "http://localhost:8081/transactions/history/1?type=GASTO"
 ```
 
-#### 8. Obtener Solo Ingresos
+#### 9. Obtener el Presupuesto Actual
 ```bash
-curl "http://localhost:8081/transactions/history/1?type=INGRESO"
+curl http://localhost:8081/transactions/budget/1
 ```
 
-#### 9. Filtro Combinado (Gastos de Mayo)
+#### 10. Obtener el Estado del Presupuesto
 ```bash
-curl "http://localhost:8081/transactions/history/1?type=GASTO&startDate=2026-05-01&endDate=2026-05-31"
+curl http://localhost:8081/transactions/budget-status/1
 ```
 
-#### 10. Eliminar Transacción
+#### 11. Obtener el Dashboard
+```bash
+curl http://localhost:8081/dashboard/1
+```
+
+#### 12. Eliminar Transacción
 ```bash
 curl -X DELETE http://localhost:8081/transactions/1
 ```
@@ -278,13 +324,13 @@ curl -X DELETE http://localhost:8081/transactions/1
 
 ## 👤 Usuarios de Prueba
 
-| Email                | Contraseña      | Nombre         | Status |
-| -------------------- | --------------- | -------------- | ------ |
-| `demo@example.com`   | `Demo1234!`     | Demo User      | ✅     |
-| `prueba@test.com`    | `Prueba123!`    | Usuario Prueba | ✅     |
-| `admin@appfinanzas.com` | `Admin1234!` | Admin User     | ✅     |
+| Email                    | Contraseña    | Nombre         | Status |
+| ---------------------- - | ------------- | -------------- | ------ |
+| `demo@example.com`       | `Demo1234!`   | Demo User      | ✅     |
+| `prueba@test.com`        | `Prueba123!`  | Usuario Prueba | ✅     |
+| `admin@appfinanzas.com`  | `Admin1234!`  | Admin User     | ✅     |
 
-> **Nota**: Puedes crear nuevos usuarios registrándote a través de la aplicación
+> **Nota**: puedes crear nuevos usuarios registrándote a través de la aplicación.
 
 ---
 
@@ -293,26 +339,40 @@ curl -X DELETE http://localhost:8081/transactions/1
 ### Tabla: users
 ```sql
 CREATE TABLE users (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  id BIGINT PRIMARY KEY,
   email VARCHAR(255) UNIQUE NOT NULL,
   password VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP
 );
 ```
 
 ### Tabla: transactions
 ```sql
 CREATE TABLE transactions (
-  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  id BIGINT PRIMARY KEY,
   user_id BIGINT NOT NULL,
   description VARCHAR(255) NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
   category VARCHAR(50) NOT NULL,
-  transaction_type VARCHAR(20) NOT NULL,
+  type VARCHAR(20) NOT NULL,
   transaction_date DATE NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  created_at TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+### Tabla: monthly_budgets
+```sql
+CREATE TABLE monthly_budgets (
+  id BIGINT PRIMARY KEY,
+  user_id BIGINT NOT NULL,
+  year INT NOT NULL,
+  month INT NOT NULL,
+  budget_limit DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)
 );
 ```
 
@@ -330,10 +390,10 @@ docker-compose up -d
 docker-compose down
 
 # Ver logs del backend
-docker-compose logs -f appfinanzas_backend
+docker-compose logs -f backend
 
 # Ver logs del frontend
-docker-compose logs -f appfinanzas_frontend
+docker-compose logs -f frontend
 
 # Verificar estado de servicios
 docker-compose ps
@@ -342,7 +402,7 @@ docker-compose ps
 docker-compose build --no-cache
 
 # Reiniciar un servicio específico
-docker-compose restart appfinanzas_backend
+docker-compose restart backend
 ```
 
 ### Acceder a la base de datos
@@ -354,11 +414,17 @@ psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
      -d appfinanzas_db_q1li \
      -c "SELECT * FROM users;"
 
-# Ver todas las transacciones
+# Ver transacciones
 psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
      -U appuser \
      -d appfinanzas_db_q1li \
      -c "SELECT * FROM transactions ORDER BY created_at DESC;"
+
+# Ver presupuestos
+psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
+     -U appuser \
+     -d appfinanzas_db_q1li \
+     -c "SELECT * FROM monthly_budgets ORDER BY updated_at DESC;"
 ```
 
 ### Compilación Manual (sin Docker)
@@ -367,7 +433,7 @@ psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
 # Backend
 cd backend
 mvn clean package
-java -jar target/personalfinancialmanagement-0.0.1-SNAPSHOT.jar
+mvn spring-boot:run
 
 # Frontend
 cd frontend
@@ -418,26 +484,33 @@ docker-compose down -v && docker-compose up -d
 - [x] Registro de usuarios con validación de email
 - [x] Validación de contraseña (requisitos robustos)
 - [x] Prevención de emails duplicados
-- [x] Login con autenticación segura
-- [x] Persistencia de sesión en localStorage
+- [x] Login con autenticación JWT
+- [x] Persistencia de sesión en `localStorage`
 - [x] Logout funcional
-- [x] Protección de rutas (solo usuarios autenticados)
+- [x] Protección de acciones por usuario autenticado en frontend
 
 ### Transacciones
 - [x] Crear gastos con categorías específicas
 - [x] Crear ingresos con categorías específicas
 - [x] Listar todas las transacciones
-- [x] Filtrar por tipo de transacción (Ingreso/Gasto)
-- [x] Filtrar por rango de fechas (startDate/endDate)
+- [x] Filtrar por tipo de transacción (`GASTO` / `INGRESO`)
+- [x] Filtrar por rango de fechas (`startDate` / `endDate`)
 - [x] Combinación de múltiples filtros
 - [x] Eliminar transacciones
 - [x] Cálculo de totales (ingresos y gastos)
 - [x] Dashboard con resumen financiero
 
+### Presupuesto
+- [x] Crear presupuesto mensual
+- [x] Editar presupuesto mensual
+- [x] Consultar estado del presupuesto
+- [x] Consultar presupuesto actual
+
 ### Base de Datos
 - [x] PostgreSQL en la nube (Render.com)
 - [x] Tabla `users` creada
 - [x] Tabla `transactions` creada
+- [x] Tabla `monthly_budgets` creada
 - [x] Relaciones entre tablas (FK)
 - [x] Datos persistentes
 - [x] SSL/TLS habilitado
@@ -455,37 +528,39 @@ docker-compose down -v && docker-compose up -d
 
 ## 🔍 Monitoreo y Estado
 
-**Última actualización:** 2026-05-10 (Sprint 2)  
-**Estado General:** ✅ **OPERATIVO - PRODUCCIÓN LISTA**
+**Última actualización:** 2026-06-03  
+**Estado General:** ✅ **OPERATIVO**
 
 ### Componentes Activos
 - ✅ Frontend (React + TypeScript)
 - ✅ Backend (Spring Boot + Java)
 - ✅ Base de Datos (PostgreSQL en la nube)
-- ✅ Autenticación y Autorización
+- ✅ Autenticación JWT y cierre de sesión
 - ✅ Gestión de Transacciones
 - ✅ Sistema de Filtros
+- ✅ Sistema de Presupuesto Mensual
+- ✅ Dashboard Financiero
 
-### Métricas de Rendimiento
-- **Tiempo de respuesta API**: < 500ms
-- **Uptime de BD**: 99.9% (Render.com SLA)
-- **Tiempo de compilación Frontend**: ~2s
-- **Consumo de memoria Backend**: ~512MB
+### Observaciones Operativas
+- El backend escucha en `8081`.
+- El frontend consume el backend mediante `VITE_API_URL`.
+- El backend expone `actuator/health` para verificación rápida.
+- El presupuesto se calcula por usuario y por mes actual.
 
 ---
 
-## 📈 Roadmap - Sprint 3 (Próximo)
+## 📈 Roadmap - Sprint (Próximo)
 
-- 🔄 Implementar edición de transacciones
-- 📊 Gráficos y análisis de gastos
-- 💱 Conversión de monedas
-- 📱 Responsive design mejorado
-- 🔔 Notificaciones de presupuesto
-- 📧 Exportación a CSV/PDF
-- 🔒 Recuperación de contraseña
-- 👥 Gestión de perfiles de usuario
-- 💳 Integración con métodos de pago
-- 📱 App móvil (React Native)
+- 🔄 Implementar edición de transacciones desde la UI.
+- 📊 Gráficos y análisis históricos de gastos.
+- 💱 Conversión de monedas.
+- 📱 Responsive design refinado.
+- 🔔 Notificaciones proactivas de presupuesto.
+- 📧 Exportación a CSV/PDF.
+- 🔒 Recuperación de contraseña.
+- 👥 Gestión avanzada de perfiles de usuario.
+- 💳 Integración con métodos de pago.
+- 📱 App móvil (React Native).
 
 ---
 
@@ -493,44 +568,44 @@ docker-compose down -v && docker-compose up -d
 
 ### Base de Datos en la Nube
 Los backups están gestionados automáticamente por Render.com:
-- Backups diarios automáticos
-- Retención de 7 días
-- Punto de restauración automático
+- Backups automáticos según la política del proveedor.
+- Restauración desde snapshots del servicio.
 
 ### Backup Manual Local (si fuera necesario)
 ```bash
 # Crear backup
-docker exec appfinanzas_backend pg_dump \
-  -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
+pg_dump -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
   -U appuser \
-  appfinanzas_db_q1li > backup_$(date +%Y%m%d_%H%M%S).sql
+  -d appfinanzas_db_q1li > backup_$(date +%Y%m%d_%H%M%S).sql
 
 # Restaurar backup
 psql -h dpg-d7shkc37uimc73dpimvg-a.ohio-postgres.render.com \
      -U appuser \
-     appfinanzas_db_q1li < backup_20260510_120000.sql
+     -d appfinanzas_db_q1li < backup_20260603_120000.sql
 ```
 
 ---
 
-## 🎯 Resumen de Cambios - Sprint 2
+## 🎯 Resumen de Cambios - Sprint 3
 
 ### ✨ Nuevas Características
 | Característica | Descripción | Estado |
 | --- | --- | --- |
 | Cambio de BD | Migración a PostgreSQL en Render.com | ✅ |
 | Creación de Cuentas | Registro de usuarios con validaciones | ✅ |
-| Inicio de Sesión | Autenticación segura | ✅ |
+| Inicio de Sesión | Autenticación JWT | ✅ |
+| Cerrar Sesión | Invalidación de token JWT | ✅ |
 | Ingresos y Gastos | Dos tipos de transacciones | ✅ |
 | Filtros por Fecha | Rango de fechas personalizable | ✅ |
-| Filtros por Categoría | Filtrado por tipo de transacción | ✅ |
-| Ingreso de Dinero | Registro de ingresos | ✅ |
+| Filtros por Tipo | Filtrado por tipo de transacción | ✅ |
+| Presupuesto Mensual | Creación y edición del presupuesto | ✅ |
+| Estado de Presupuesto | Visualización de gasto y restante | ✅ |
 | Dashboard | Resumen visual de finanzas | ✅ |
 
 ### 🔧 Cambios Técnicos
-- Backend: Spring Boot 3.5.13 con arquitectura hexagonal
-- Frontend: React 18.3 + TypeScript 5.5 + Vite
-- Database: PostgreSQL 15 en Render.com
-- Container: Docker + Docker Compose
-- Autenticación: Email + Contraseña (localStorage)
-- API: REST con filtros dinámicos
+- Backend: Spring Boot 3.5.13 con arquitectura hexagonal.
+- Frontend: React 18.3 + TypeScript 5.5 + Vite.
+- Database: PostgreSQL 15 en Render.com.
+- Container: Docker + Docker Compose.
+- Autenticación: JWT + `localStorage`.
+- API: REST con filtros dinámicos y presupuesto mensual.
